@@ -13,22 +13,26 @@ namespace avinash
         [MenuItem("Tools/Setup/Create Default Folders")]
         public static void CreateDefaultFolders()
         {
-           CreateDirectories("_Project" , "Scripts", "Materials", "Music", "Perfabs" , "Models","Scenes");
+            CreateDirectories("_Project", "Scripts", "Materials", "Music", "Perfabs", "Models", "Scenes");
             Refresh();
 
         }
-        public static void CreateDirectories(string root , params string[] dir)
+        public static void CreateDirectories(string root, params string[] dir)
         {
             string fullPath = Combine(dataPath, root);
-            foreach(string newDir in dir)
+            foreach (string newDir in dir)
             {
-                CreateDirectory(Combine(fullPath,newDir));
+                CreateDirectory(Combine(fullPath, newDir));
             }
         }
         [MenuItem(" Tools/Setup /Add Necessary Package")]
         static void Add()
         {
+            Client.Add("com.unity.textmeshpro");
             Client.Add("com.unity.ide.visualstudio");
+            Client.Remove("com.unity.visualscripting");
+            Client.Remove("com.unity.ide.rider");
+            Client.Add("com.unity.timeline");
         }
     }
 }

@@ -24,3 +24,5 @@ curl -OJL https://raw.githubusercontent.com/w3villa-avinash/UnityTool/main/Tools
 
 echo >> .gitignore
 curl -o .gitignore https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore
+curl -o Assets\Scritps\Tools.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/Tools.cs 
+```
