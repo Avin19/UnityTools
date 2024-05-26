@@ -44,6 +44,10 @@ For more information take a look at
 Editior Scritps 
 
 ```bash 
+mkdir Assets\Editor
 curl -o Assets\Editor\CustomScritpsTemplate.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs
+mkdir Assets\Editor\Template
+cd Assets\Editor\Template 
+curl -O https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt -O https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.txt -O https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt
 
 ```
