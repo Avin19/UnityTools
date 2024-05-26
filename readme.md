@@ -36,4 +36,14 @@ puml-gen {Input/Scripts/} {Out/plantuml} -dir -ignore Private,protected -createA
 puml-gen C:\Source\App1 C:\PlantUml\App1 -dir -excludePaths bin,obj,Properties
 
 
-For more information take a look at ![Click Her](https://github.com/pierre3/PlantUmlClassDiagramGenerator)
+For more information take a look at 
+![Click Here](https://github.com/pierre3/PlantUmlClassDiagramGenerator)
+
+
+
+Editior Scritps 
+
+```bash 
+curl -o Assets\Editor\CustomScritpsTemplate.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs
+
+```
