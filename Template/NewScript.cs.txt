@@ -1,0 +1,13 @@
+using UnityEngine;
+
+
+
+#ROOTNAMESPACEBEGIN#
+public class #SCRIPTNAME# : MonoBehaviour
+{
+  
+
+}
+
+#ROOTNAMESPACEEND#
+
