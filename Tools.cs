@@ -28,14 +28,39 @@ namespace avinash
                 CreateDirectory(Combine(fullPath, newDir));
             }
         }
-        [MenuItem(" Tools/Setup /Add Necessary Package")]
-        static void Add()
+
+        [MenuItem("Tools/Setup /Add Necessary Package / Resolve")]
+        public static void Resolve()
         {
-            Client.Add("com.unity.textmeshpro");
-            Client.Add("com.unity.ide.visualstudio");
-            Client.Remove("com.unity.visualscripting");
-            Client.Remove("com.unity.ide.rider");
-            Client.Add("com.unity.timeline");
+            Client.Resolve();
         }
+        [MenuItem(" Tools/Setup /Add Necessary Package / Update Visual Studio Code ")]
+        public static void AddVisualStudioCode()
+        {
+            Client.Add("com.unity.ide.visualstudio");
+
+        }
+        [MenuItem(" Tools/Setup /Add Necessary Package / Update Text Mesh Pro  ")]
+        public static void AddTextMeshPro()
+        {
+            Client.Add("com.unity.ide.visualstudio");
+        }
+        [MenuItem(" Tools/Setup /Add Necessary Package / Remove Visual Scripting ")]
+        public static void RemoveVisualScripting()
+        {
+            Client.Remove("com.unity.visualscripting");
+        }
+        [MenuItem(" Tools/Setup /Add Necessary Package / Remove Rider  ")]
+        public static void RemoveRider()
+        {
+            Client.Remove("com.unity.ide.rider");
+        }
+        [MenuItem(" Tools/Setup /Add Necessary Package / Remove Timeline  ")]
+        public static void RemoveTimeline()
+        {
+            Client.Remove("com.unity.timeline");
+        }
+
+
     }
 }
