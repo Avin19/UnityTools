@@ -27,7 +27,7 @@ curl -o Assets\Scritps\Tools.cs https://raw.githubusercontent.com/Avin19/UnityTo
 ```
 
 
-PlantUml Diagram Generator 
+### PlantUml Diagram Generator 
 
 puml-gen C:\Source\App1 C:\PlantUml\App1 -dir -ignore Private,Protected -createAssociation -allInOne
 puml-gen {Input/Scripts/} {Out/plantuml} -dir -ignore Private,protected -createAssociation -allInOne 
@@ -41,7 +41,7 @@ For more information take a look at
 
 
 
-Editior Scritps 
+### Editior Scritps 
 
 ```bash 
 mkdir Assets\Editor
@@ -49,7 +49,13 @@ curl -o Assets\Editor\CustomScritpsTemplate.cs https://raw.githubusercontent.com
 mkdir Assets\Editor\Template
 cd Assets\Editor\Template 
 curl -O NewScript.cs.txthttps://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt 
-curl -O NewEnum.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.txt 
+curl -O NewEnum.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.Txt
 curl -O NewScriptableObject.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt
 
 ```
+
+
+## To Do List 
+
+- [ ] Reduce the Number of Setup using bash script 
+- [ ] Once Everything is done remove all the Tools relate scripts 

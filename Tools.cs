@@ -8,12 +8,15 @@ using UnityEngine;
 
 namespace avinash
 {
+    /// <summary>
+    ///  This is Editor Tool to  Create Default Folder Structure and Install Necessary packages 
+    /// </summary>
     public static class Tools
     {
         [MenuItem("Tools/Setup/Create Default Folders")]
         public static void CreateDefaultFolders()
         {
-            CreateDirectories("_Project", "Scripts", "Materials", "Music", "Perfabs", "Models", "Scenes");
+            CreateDirectories("Project", "Scripts", "Materials", "Music", "Perfabs", "Models", "Scenes", "Editor");
             Refresh();
 
         }
