@@ -29,36 +29,39 @@ namespace avinash
             }
         }
 
-        [MenuItem("Tools/Setup /Add Necessary Package / Resolve")]
+        [MenuItem("Tools/Setup / Resolve Packages")]
         public static void Resolve()
         {
             Client.Resolve();
         }
-        [MenuItem(" Tools/Setup /Add Necessary Package / Update Visual Studio Code ")]
+        [MenuItem(" Tools/Setup /Add Necessary Package  ")]
         public static void AddVisualStudioCode()
         {
             Client.Add("com.unity.ide.visualstudio");
+            AddTextMeshPro();
+            Resolve();
 
         }
-        [MenuItem(" Tools/Setup /Add Necessary Package / Update Text Mesh Pro  ")]
         public static void AddTextMeshPro()
         {
-            Client.Add("com.unity.ide.visualstudio");
+            Client.Add("com.unity.textmeshpro");
         }
-        [MenuItem(" Tools/Setup /Add Necessary Package / Remove Visual Scripting ")]
+        [MenuItem(" Tools/Setup /Remove Unecessary Package")]
         public static void RemoveVisualScripting()
         {
             Client.Remove("com.unity.visualscripting");
+            RemoveRider();
         }
-        [MenuItem(" Tools/Setup /Add Necessary Package / Remove Rider  ")]
+
         public static void RemoveRider()
         {
             Client.Remove("com.unity.ide.rider");
+            RemoveTimeline();
         }
-        [MenuItem(" Tools/Setup /Add Necessary Package / Remove Timeline  ")]
         public static void RemoveTimeline()
         {
             Client.Remove("com.unity.timeline");
+            Resolve();
         }
 
 
