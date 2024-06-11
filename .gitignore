@@ -11,6 +11,7 @@
 /[Uu]ser[Ss]ettings/
 /[Oo]ut/
 /[Aa]ssets/Project/Editor/
+/[Aa]ssets/Project/Models/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
@@ -18,6 +19,7 @@
 
 # Recordings can get excessive in size
 /[Rr]ecordings/
+/[Ss]creenShoot/
 
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
