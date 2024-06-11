@@ -23,9 +23,21 @@ curl -OJL https://raw.githubusercontent.com/w3villa-avinash/UnityTool/main/Tools
 ```bash
 
 curl -o .gitignore https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore
-curl -o Assets\Scritps\Tools.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/Tools.cs 
+curl -o Assets\Tools.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/Tools.cs 
 ```
 
+### Editior Scritps 
+
+```bash 
+
+mkdir  Assets\Project\Editor\Template
+cd  Assets\Project\Editor\
+curl -o Assets\Project\Editor\CustomScritpsTemplate.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs
+curl -O Template\NewScript.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt 
+curl -O Template\NewEnum.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.Txt
+curl -O Template\NewScriptableObject.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt
+curl -O Template\NewClass.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewClass.cs.txt
+```
 
 ### PlantUml Diagram Generator 
 
@@ -41,20 +53,13 @@ For more information take a look at
 
 
 
-### Editior Scritps 
 
-```bash 
-curl -o Assets\Project\Editor\CustomScritpsTemplate.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs
-mkdir  Assets\Project\Editor\Template
-cd  Assets\Project\Editor\Template 
-curl -O NewScript.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt 
-curl -O NewEnum.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.Txt
-curl -O NewScriptableObject.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt
-
-```
 
 
 ## To Do List 
 
 - [ ] Reduce the Number of Setup using bash script 
 - [ ] Once Everything is done remove all the Tools relate scripts 
+
+
+current directory Directory.GetCurrentDirectory()
