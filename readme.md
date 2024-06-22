@@ -7,7 +7,7 @@
 
 ### Generate the folder by going to Tool> Setup > Create Default Folders
 
-
+<!-- 
 ### MAC 
 
 
@@ -17,7 +17,7 @@ curl -o .gitignore https://raw.githubusercontent.com/w3villa-avinash/UnityTool/m
 curl -OJL https://raw.githubusercontent.com/w3villa-avinash/UnityTool/main/Tools.cs
 
 
-```
+``` -->
 ### Windows 
 
 ```bash

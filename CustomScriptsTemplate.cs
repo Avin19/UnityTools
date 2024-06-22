@@ -3,11 +3,11 @@ using UnityEditor;
 
 public static class CustomScriptsTemplets
 {
-    private static string Path = "Assets/Project/Editor/Templates/";
+    private static string Path = "Assets/Project/Editor/Template/";
     [MenuItem("Assets/Create/Code/MonoBehaviour", priority = 40)]
     public static void CreateMonoBehaviourMenuItem()
     {
-        string templatePath = "NewScripts.cs.txt";
+        string templatePath = "NewScript.cs.txt";
         ProjectWindowUtil.CreateScriptAssetFromTemplateFile(Path + templatePath, "NewScript.cs");
     }
     [MenuItem("Assets/Create/Code/Enum", priority = 41)]

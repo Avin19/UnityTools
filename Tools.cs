@@ -40,42 +40,8 @@ namespace avinash
             string[] apackages = { "com.unity.ide.visualstudio", "com.unity.textmeshpro", "com.unity.inputsystem" };
             string[] rpackages = { "com.unity.visualscripting", "com.unity.ide.rider", "com.unity.timeline" };
             Client.AddAndRemove(apackages, rpackages);
-
             Resolve();
         }
-        [MenuItem(" Tools/Setup /Visual Studio Package  ")]
-        public static void AddVisualStudioCode()
-        {
-            Client.Add("com.unity.ide.visualstudio");
-            Resolve();
-            AddTextMeshPro();
-
-
-        }
-        public static void AddTextMeshPro()
-        {
-            Client.Add("com.unity.textmeshpro");
-        }
-        [MenuItem(" Tools/Setup /Remove Unecessary Package")]
-        public static void RemoveVisualScripting()
-        {
-            Client.Remove("com.unity.visualscripting");
-            Resolve();
-            RemoveRider();
-        }
-
-        public static void RemoveRider()
-        {
-            Client.Remove("com.unity.ide.rider");
-            Resolve();
-            RemoveTimeline();
-        }
-        public static void RemoveTimeline()
-        {
-            Client.Remove("com.unity.timeline");
-            Resolve();
-        }
-
 
     }
 }
