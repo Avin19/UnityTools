@@ -32,7 +32,7 @@ curl -o Assets\Tools.cs https://raw.githubusercontent.com/Avin19/UnityTools/main
 
 mkdir  Assets\Project\Editor\Template
 cd  Assets\Project\Editor\
-curl -o Assets\Project\Editor\CustomScritpsTemplate.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs
+curl -O Assets\Project\Editor\CustomScritpsTemplate.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs
 curl -O Template\NewScript.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt 
 curl -O Template\NewEnum.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.Txt
 curl -O Template\NewScriptableObject.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt

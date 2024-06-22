@@ -29,12 +29,12 @@ namespace avinash
             }
         }
 
-        [MenuItem("Tools/Setup / Resolve Packages")]
+        [MenuItem("Tools/Setup/Resolve Packages")]
         public static void Resolve()
         {
             Client.Resolve();
         }
-        [MenuItem(" Tools/Setup /Add Necessary Package  ")]
+        [MenuItem(" Tools/Setup/Add Necessary Package  ")]
         public static void AddRemoveNecessaryPackages()
         {
             string[] apackages = { "com.unity.ide.visualstudio", "com.unity.textmeshpro", "com.unity.inputsystem" };
@@ -43,5 +43,31 @@ namespace avinash
             Resolve();
         }
 
+        [MenuItem("Tools/Setup/Getting Up All Script")]
+        public static async Task GettingAllScripts()
+        {
+            string folderPath = GetCurrentDirectory();
+            string fileUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore";
+            string filePath = Combine(folderPath, ".gitignore");
+            await DownloadFileAsync(fileUrl, filePath);
+        }
+        static async Task DownloadFileAsync(string url, string filePath)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                // Send a GET request to the specified URL
+                HttpResponseMessage response = await client.GetAsync(url);
+
+                // Ensure the request was successful
+                response.EnsureSuccessStatusCode();
+
+                // Read the response content as a byte array
+                byte[] fileBytes = await response.Content.ReadAsByteArrayAsync();
+
+                // Write the byte array to the specified file
+                await File.WriteAllBytesAsync(filePath, fileBytes);
+            }
+
+        }
     }
 }
