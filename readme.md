@@ -22,11 +22,10 @@ curl -OJL https://raw.githubusercontent.com/w3villa-avinash/UnityTool/main/Tools
 
 ```bash
 
-curl -o .gitignore https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore
-curl -o Assets\Tools.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/Tools.cs 
+curl -o Assets\ScriptDownloaderEditor.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/ScriptDownloaderEditor.cs 
 ```
 
-### Editior Scritps 
+<!-- ### Editior Scritps 
 
 ```bash 
 
@@ -37,7 +36,7 @@ curl -O Template\NewScript.cs.txt https://raw.githubusercontent.com/Avin19/Unity
 curl -O Template\NewEnum.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.Txt
 curl -O Template\NewScriptableObject.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt
 curl -O Template\NewClass.cs.txt https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewClass.cs.txt
-```
+``` -->
 
 ### PlantUml Diagram Generator 
 

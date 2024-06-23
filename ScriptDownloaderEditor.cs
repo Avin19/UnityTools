@@ -9,6 +9,14 @@ using System.Threading.Tasks;
 
 public class ScriptDownloaderEditor : EditorWindow
 {
+    private bool createScripts = true;
+    private bool createMaterials = true;
+    private bool createMusic = true;
+    private bool createPrefabs = true;
+    private bool createModels = true;
+    private bool createTextures = true;
+    private bool createEditor = true;
+
     [MenuItem("Tools/Download Template Scripts")]
     public static void ShowWindow()
     {
@@ -29,6 +37,21 @@ public class ScriptDownloaderEditor : EditorWindow
         {
             Resolve();
         }
+
+        GUILayout.Label("Create Default Folders", EditorStyles.boldLabel);
+
+        createScripts = GUILayout.Toggle(createScripts, "Scripts");
+        createMaterials = GUILayout.Toggle(createMaterials, "Materials");
+        createMusic = GUILayout.Toggle(createMusic, "Music");
+        createPrefabs = GUILayout.Toggle(createPrefabs, "Prefabs");
+        createModels = GUILayout.Toggle(createModels, "Models");
+        createTextures = GUILayout.Toggle(createTextures, "Textures");
+        createEditor = GUILayout.Toggle(createEditor, "Editor");
+
+        if (GUILayout.Button("Create Default Folders"))
+        {
+            CreateDefaultFolders();
+        }
     }
 
     public static async Task GettingTemplateScripts()
@@ -36,7 +59,6 @@ public class ScriptDownloaderEditor : EditorWindow
         string folderPath = Application.dataPath;
 
         string[] fileUrls = {
-            "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore",
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs",
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt",
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.Txt",
@@ -44,7 +66,6 @@ public class ScriptDownloaderEditor : EditorWindow
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewClass.cs.txt"
         };
         string[] fileNames = {
-            ".gitignore",
             "CustomScriptsTemplate.cs",
             "NewScript.cs.txt",
             "NewEnum.cs.txt",
@@ -148,6 +169,38 @@ public class ScriptDownloaderEditor : EditorWindow
             else if (request.Status >= StatusCode.Failure)
             {
                 Debug.LogError($"Failed to remove package: {package}, Error: {request.Error.message}");
+            }
+        }
+    }
+
+    [MenuItem("Tools/Setup/Create Default Folders")]
+    public static void CreateDefaultFolders()
+    {
+        List<string> selectedFolders = new List<string>();
+
+        if (createScripts) selectedFolders.Add("Scripts");
+        if (createMaterials) selectedFolders.Add("Materials");
+        if (createMusic) selectedFolders.Add("Music");
+        if (createPrefabs) selectedFolders.Add("Prefabs");
+        if (createModels) selectedFolders.Add("Models");
+        if (createTextures) selectedFolders.Add("Textures");
+        if (createEditor) selectedFolders.Add("Editor");
+
+        CreateDirectories("Project", selectedFolders.ToArray());
+        AssetDatabase.Refresh();
+        Debug.Log("Selected folders created.");
+    }
+
+    public static void CreateDirectories(string root, params string[] dirs)
+    {
+        string fullPath = Path.Combine(Application.dataPath, root);
+        foreach (string dir in dirs)
+        {
+            string newDir = Path.Combine(fullPath, dir);
+            if (!Directory.Exists(newDir))
+            {
+                Directory.CreateDirectory(newDir);
+                Debug.Log($"Created directory: {newDir}");
             }
         }
     }
