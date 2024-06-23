@@ -43,13 +43,25 @@ namespace avinash
             Resolve();
         }
 
-        [MenuItem("Tools/Setup/Getting Up All Script")]
-        public static async Task GettingAllScripts()
+        [MenuItem("Tools/Setup/Gitignore")]
+        public static async Task GettingGitIgnore()
         {
             string folderPath = GetCurrentDirectory();
             string fileUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore";
             string filePath = Combine(folderPath, ".gitignore");
             await DownloadFileAsync(fileUrl, filePath);
+        }
+        [MenuItem("Tools/Setup/TemplateFiles")]
+        public statis async async Task GettingTempaleScripts()
+        {
+            string folderPath = GetCurrentDirectory();
+            string fullPath = Combine(folderPath, "/Asset/Project/Editor/Template");
+            string[] fileUrls = { "https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs", "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt ", "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.txt", "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt", "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewClass.cs.txt", }
+             foreach (string fileUrl in fileUrls)
+            {
+                await DownloadFileAsync(fileUrl, fullPath);
+            }
+
         }
         static async Task DownloadFileAsync(string url, string filePath)
         {
