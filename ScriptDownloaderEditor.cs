@@ -1,14 +1,15 @@
 using UnityEditor;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
-using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Diagnostics;
+using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
 
 public class ScriptDownloaderEditor : EditorWindow
 {
+    private string remoteRepositoryURL = "";
     private bool createScripts = true;
     private bool createMaterials = true;
     private bool createMusic = true;
@@ -16,41 +17,169 @@ public class ScriptDownloaderEditor : EditorWindow
     private bool createModels = true;
     private bool createTextures = true;
     private bool createEditor = true;
+    private bool downloadGitIgnore = true;
+    private string readmeContent = "# My Unity Project\n\nThis is a README file for my Unity project.";
 
-    [MenuItem("Tools/Download Template Scripts")]
+    [MenuItem("Tools/Setup/Script Downloader")]
     public static void ShowWindow()
     {
-        GetWindow<ScriptDownloaderEditor>("Download Template Scripts");
+        GetWindow<ScriptDownloaderEditor>("Script Downloader");
     }
 
-    private async void OnGUI()
+    private void OnGUI()
     {
+        GUILayout.Label("Git Repository Setup", EditorStyles.boldLabel);
+        remoteRepositoryURL = EditorGUILayout.TextField("Remote Repository URL", remoteRepositoryURL);
+
+        if (GUILayout.Button("Initialize Git Repository"))
+        {
+            InitializeGitRepository(remoteRepositoryURL);
+        }
+
+        GUILayout.Label("Folder Setup", EditorStyles.boldLabel);
+        createScripts = EditorGUILayout.Toggle("Scripts", createScripts);
+        createMaterials = EditorGUILayout.Toggle("Materials", createMaterials);
+        createMusic = EditorGUILayout.Toggle("Music", createMusic);
+        createPrefabs = EditorGUILayout.Toggle("Prefabs", createPrefabs);
+        createModels = EditorGUILayout.Toggle("Models", createModels);
+        createTextures = EditorGUILayout.Toggle("Textures", createTextures);
+        createEditor = EditorGUILayout.Toggle("Editor", createEditor);
+
+        if (GUILayout.Button("Create Folders"))
+        {
+            CreateSelectedFolders();
+        }
+
+        GUILayout.Label("README Setup", EditorStyles.boldLabel);
+        readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
+
+        if (GUILayout.Button("Create README"))
+        {
+            CreateReadmeFile();
+        }
+
+        GUILayout.Label("Download Scripts", EditorStyles.boldLabel);
         if (GUILayout.Button("Download Scripts"))
         {
-            await GettingTemplateScripts();
-        }
-        if (GUILayout.Button("Add Necessary Packages"))
-        {
-            await AddRemoveNecessaryPackages();
-        }
-        if (GUILayout.Button("Resolve Packages"))
-        {
-            Resolve();
+            _ = GettingTemplateScripts(); // Fire and forget async call
         }
 
-        GUILayout.Label("Create Default Folders", EditorStyles.boldLabel);
+        GUILayout.Label("Download .gitignore", EditorStyles.boldLabel);
+        downloadGitIgnore = EditorGUILayout.Toggle("Download .gitignore", downloadGitIgnore);
 
-        createScripts = GUILayout.Toggle(createScripts, "Scripts");
-        createMaterials = GUILayout.Toggle(createMaterials, "Materials");
-        createMusic = GUILayout.Toggle(createMusic, "Music");
-        createPrefabs = GUILayout.Toggle(createPrefabs, "Prefabs");
-        createModels = GUILayout.Toggle(createModels, "Models");
-        createTextures = GUILayout.Toggle(createTextures, "Textures");
-        createEditor = GUILayout.Toggle(createEditor, "Editor");
-
-        if (GUILayout.Button("Create Default Folders"))
+        if (GUILayout.Button("Download .gitignore"))
         {
-            CreateDefaultFolders();
+            _ = GettingGitIgnore(); // Fire and forget async call
+        }
+
+        GUILayout.Label("Package Management", EditorStyles.boldLabel);
+        if (GUILayout.Button("Add/Remove Necessary Packages"))
+        {
+            _ = AddRemoveNecessaryPackages(); // Fire and forget async call
+        }
+    }
+
+    private static void InitializeGitRepository(string remoteURL)
+    {
+        string projectPath = Application.dataPath.Replace("/Assets", "");
+        RunGitCommand("init", projectPath);
+        RunGitCommand("add .", projectPath);
+        RunGitCommand("commit -m \"Initial commit\"", projectPath);
+
+        // Add remote repository
+        if (!string.IsNullOrEmpty(remoteURL))
+        {
+            RunGitCommand($"remote add origin {remoteURL}", projectPath);
+
+            // Push to the remote repository
+            RunGitCommand("push -u origin master", projectPath);
+        }
+
+        UnityEngine.Debug.Log("Initialized a new Git repository and added remote repository.");
+    }
+
+    private static void RunGitCommand(string command, string workingDirectory)
+    {
+        ProcessStartInfo processInfo = new ProcessStartInfo
+        {
+            FileName = "git",
+            Arguments = command,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true,
+            WorkingDirectory = workingDirectory
+        };
+
+        Process process = new Process
+        {
+            StartInfo = processInfo
+        };
+
+        process.Start();
+
+        string output = process.StandardOutput.ReadToEnd();
+        string error = process.StandardError.ReadToEnd();
+
+        process.WaitForExit();
+
+        if (process.ExitCode == 0)
+        {
+            UnityEngine.Debug.Log($"Command executed successfully:\n{output}");
+        }
+        else
+        {
+            UnityEngine.Debug.LogError($"Error executing command:\n{error}");
+        }
+    }
+
+    private void CreateSelectedFolders()
+    {
+        string projectPath = Application.dataPath.Replace("/Assets", "");
+        string[] folders = new string[]
+        {
+            createScripts ? "Scripts" : null,
+            createMaterials ? "Materials" : null,
+            createMusic ? "Music" : null,
+            createPrefabs ? "Prefabs" : null,
+            createModels ? "Models" : null,
+            createTextures ? "Textures" : null,
+            createEditor ? "Editor" : null
+        };
+
+        foreach (string folder in folders)
+        {
+            if (folder != null)
+            {
+                string fullPath = Path.Combine(projectPath, "Assets", folder);
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                    UnityEngine.Debug.Log($"Created folder: {fullPath}");
+                }
+                else
+                {
+                    UnityEngine.Debug.Log($"Folder already exists: {fullPath}");
+                }
+            }
+        }
+
+        AssetDatabase.Refresh();
+    }
+
+    private void CreateReadmeFile()
+    {
+        string projectPath = Application.dataPath.Replace("/Assets", "");
+        string readmePath = Path.Combine(projectPath, "README.md");
+
+        try
+        {
+            File.WriteAllText(readmePath, readmeContent);
+            UnityEngine.Debug.Log($"README file created at: {readmePath}");
+        }
+        catch (System.Exception ex)
+        {
+            UnityEngine.Debug.LogError($"Error creating README file: {ex.Message}");
         }
     }
 
@@ -75,18 +204,15 @@ public class ScriptDownloaderEditor : EditorWindow
 
         for (int i = 0; i < fileUrls.Length; i++)
         {
-            string fullPath = Path.Combine(folderPath, "Project/Editor/Template", fileNames[i]);
+            string fullPath = Path.Combine(folderPath, "Project\\Editor\\Template", fileNames[i]);
 
             // Ensure the directory exists
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
 
-            EditorUtility.DisplayProgressBar("Downloading Scripts", $"Downloading {fileNames[i]}...", (float)i / fileUrls.Length);
-
             await DownloadFileAsync(fileUrls[i], fullPath);
         }
 
-        EditorUtility.ClearProgressBar();
-        Debug.Log("All scripts downloaded successfully.");
+        UnityEngine.Debug.Log("All scripts downloaded successfully.");
     }
 
     private static async Task DownloadFileAsync(string url, string filePath)
@@ -107,23 +233,24 @@ public class ScriptDownloaderEditor : EditorWindow
                 // Write the byte array to the specified file
                 await File.WriteAllBytesAsync(filePath, fileBytes);
 
-                Debug.Log($"Downloaded and saved file to {filePath}");
+                UnityEngine.Debug.Log($"Downloaded and saved file to {filePath}");
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
-                Debug.LogError($"An error occurred while downloading {url}: {ex.Message}");
+                UnityEngine.Debug.LogError($"An error occurred while downloading {url}: {ex.Message}");
             }
         }
     }
 
-    [MenuItem("Tools/Setup/Resolve Packages")]
-    public static void Resolve()
+    public static async Task GettingGitIgnore()
     {
-        Client.Resolve();
-        Debug.Log("Packages resolved.");
+        string folderPath = Application.dataPath;
+        string fileUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore";
+        string filePath = Path.Combine(folderPath, ".gitignore");
+        await DownloadFileAsync(fileUrl, filePath);
+        UnityEngine.Debug.Log("Downloaded .gitignore file.");
     }
 
-    [MenuItem("Tools/Setup/Add Necessary Packages")]
     public static async Task AddRemoveNecessaryPackages()
     {
         string[] packagesToAdd = { "com.unity.ide.visualstudio", "com.unity.textmeshpro", "com.unity.inputsystem" };
@@ -145,11 +272,11 @@ public class ScriptDownloaderEditor : EditorWindow
 
             if (request.Status == StatusCode.Success)
             {
-                Debug.Log($"Successfully added package: {package}");
+                UnityEngine.Debug.Log($"Successfully added package: {package}");
             }
             else if (request.Status >= StatusCode.Failure)
             {
-                Debug.LogError($"Failed to add package: {package}, Error: {request.Error.message}");
+                UnityEngine.Debug.LogError($"Failed to add package: {package}, Error: {request.Error.message}");
             }
         }
     }
@@ -164,44 +291,18 @@ public class ScriptDownloaderEditor : EditorWindow
 
             if (request.Status == StatusCode.Success)
             {
-                Debug.Log($"Successfully removed package: {package}");
+                UnityEngine.Debug.Log($"Successfully removed package: {package}");
             }
             else if (request.Status >= StatusCode.Failure)
             {
-                Debug.LogError($"Failed to remove package: {package}, Error: {request.Error.message}");
+                UnityEngine.Debug.LogError($"Failed to remove package: {package}, Error: {request.Error.message}");
             }
         }
     }
 
-    [MenuItem("Tools/Setup/Create Default Folders")]
-    public static void CreateDefaultFolders()
+    private static void Resolve()
     {
-        List<string> selectedFolders = new List<string>();
-
-        if (createScripts) selectedFolders.Add("Scripts");
-        if (createMaterials) selectedFolders.Add("Materials");
-        if (createMusic) selectedFolders.Add("Music");
-        if (createPrefabs) selectedFolders.Add("Prefabs");
-        if (createModels) selectedFolders.Add("Models");
-        if (createTextures) selectedFolders.Add("Textures");
-        if (createEditor) selectedFolders.Add("Editor");
-
-        CreateDirectories("Project", selectedFolders.ToArray());
-        AssetDatabase.Refresh();
-        Debug.Log("Selected folders created.");
-    }
-
-    public static void CreateDirectories(string root, params string[] dirs)
-    {
-        string fullPath = Path.Combine(Application.dataPath, root);
-        foreach (string dir in dirs)
-        {
-            string newDir = Path.Combine(fullPath, dir);
-            if (!Directory.Exists(newDir))
-            {
-                Directory.CreateDirectory(newDir);
-                Debug.Log($"Created directory: {newDir}");
-            }
-        }
+        Client.Resolve();
+        UnityEngine.Debug.Log("Packages resolved.");
     }
 }
