@@ -111,7 +111,7 @@ public class ScriptDownloaderEditor : EditorWindow
 
     private void CreateReadmeFile()
     {
-        string projectPath = Application.dataPath;
+        string projectPath = Application.dataPath.Replace("/Assets", "");
         string readmePath = Path.Combine(projectPath, "README.md");
 
         try
