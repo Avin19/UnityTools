@@ -9,7 +9,7 @@ using UnityEditor.PackageManager.Requests;
 
 public class ScriptDownloaderEditor : EditorWindow
 {
-    private string remoteRepositoryURL = "";
+
     private bool createScripts = true;
     private bool createMaterials = true;
     private bool createMusic = true;
@@ -28,13 +28,7 @@ public class ScriptDownloaderEditor : EditorWindow
 
     private void OnGUI()
     {
-        GUILayout.Label("Git Repository Setup", EditorStyles.boldLabel);
-        remoteRepositoryURL = EditorGUILayout.TextField("Remote Repository URL", remoteRepositoryURL);
-
-        if (GUILayout.Button("Initialize Git Repository"))
-        {
-            InitializeGitRepository(remoteRepositoryURL);
-        }
+       
 
         GUILayout.Label("Folder Setup", EditorStyles.boldLabel);
         createScripts = EditorGUILayout.Toggle("Scripts", createScripts);
@@ -79,60 +73,8 @@ public class ScriptDownloaderEditor : EditorWindow
         }
     }
 
-    private static void InitializeGitRepository(string remoteURL)
-    {
-        string projectPath = Application.dataPath.Replace("/Assets", "");
-        RunGitCommand("init", projectPath);
-        RunGitCommand("add .", projectPath);
-        RunGitCommand("commit -m \"Initial commit\"", projectPath);
 
-        // Add remote repository
-        if (!string.IsNullOrEmpty(remoteURL))
-        {
-            RunGitCommand($"remote add origin {remoteURL}", projectPath);
-
-            // Push to the remote repository
-            RunGitCommand("push -u origin master", projectPath);
-        }
-
-        UnityEngine.Debug.Log("Initialized a new Git repository and added remote repository.");
-    }
-
-    private static void RunGitCommand(string command, string workingDirectory)
-    {
-        ProcessStartInfo processInfo = new ProcessStartInfo
-        {
-            FileName = "git",
-            Arguments = command,
-            UseShellExecute = false,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true,
-            CreateNoWindow = true,
-            WorkingDirectory = workingDirectory
-        };
-
-        Process process = new Process
-        {
-            StartInfo = processInfo
-        };
-
-        process.Start();
-
-        string output = process.StandardOutput.ReadToEnd();
-        string error = process.StandardError.ReadToEnd();
-
-        process.WaitForExit();
-
-        if (process.ExitCode == 0)
-        {
-            UnityEngine.Debug.Log($"Command executed successfully:\n{output}");
-        }
-        else
-        {
-            UnityEngine.Debug.LogError($"Error executing command:\n{error}");
-        }
-    }
-
+   
     private void CreateSelectedFolders()
     {
         string projectPath = Application.dataPath.Replace("/Assets", "");

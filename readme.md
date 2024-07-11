@@ -11,11 +11,6 @@ This Unity Editor script automates the initial setup process for Unity projects,
 
 ## 🔧 Features
 
-### Git Repository Initialization:
-
-- Easily initialize a new Git repository.
-- Automatically add a remote repository URL.
-- Perform the first commit and push to the remote repository.
 ### Folder Creation:
 
 - Customize and create essential project folders like Scripts, Materials, Music, Prefabs, Models, Textures, and Editor with a single click.
@@ -35,10 +30,6 @@ This Unity Editor script automates the initial setup process for Unity projects,
 ## 🛠 How It Works
 
 
-### Git Setup:
-
-- Input your remote repository URL.
-- Click "Initialize Git Repository" to set up Git and push your initial commit.
 
 ### Folder Creation:
 
