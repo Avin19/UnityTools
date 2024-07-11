@@ -77,7 +77,7 @@ public class ScriptDownloaderEditor : EditorWindow
    
     private void CreateSelectedFolders()
     {
-        string projectPath = Application.dataPath.Replace("/Assets", "");
+        string projectPath = Application.dataPath;
         string[] folders = new string[]
         {
             createScripts ? "Scripts" : null,
@@ -93,7 +93,7 @@ public class ScriptDownloaderEditor : EditorWindow
         {
             if (folder != null)
             {
-                string fullPath = Path.Combine(projectPath, "Assets", folder);
+                string fullPath = Path.Combine(projectPath, "Project", folder);
                 if (!Directory.Exists(fullPath))
                 {
                     Directory.CreateDirectory(fullPath);
@@ -111,7 +111,7 @@ public class ScriptDownloaderEditor : EditorWindow
 
     private void CreateReadmeFile()
     {
-        string projectPath = Application.dataPath.Replace("/Assets", "");
+        string projectPath = Application.dataPath;
         string readmePath = Path.Combine(projectPath, "README.md");
 
         try
@@ -186,7 +186,7 @@ public class ScriptDownloaderEditor : EditorWindow
 
     public static async Task GettingGitIgnore()
     {
-        string folderPath = Application.dataPath;
+        string folderPath = Application.dataPath.Replace("/Assets", "");
         string fileUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore";
         string filePath = Path.Combine(folderPath, ".gitignore");
         await DownloadFileAsync(fileUrl, filePath);
