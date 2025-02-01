@@ -42,7 +42,7 @@ public class ScriptDownloaderEditor : EditorWindow
 This game is developed using Unity3D game engine and programmed in C#. Contributions are welcome, whether it's bug fixes, feature enhancements, or optimizations.
 ## Credits
 
-This game remake is created by Avinash Yadav.
+This game remake is created by Developer Name .
 
 ## Feedback
 
