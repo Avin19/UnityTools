@@ -129,5 +129,5 @@ puml-gen Assets/Scritps out -dir  -excludePaths bin,obj,Properties -createAssoci
 For more information take a look at 
 
 
-![Click Here](https://github.com/pierre3/PlantUmlClassDiagramGenerator)
+[Click Here](https://github.com/pierre3/PlantUmlClassDiagramGenerator)
 
