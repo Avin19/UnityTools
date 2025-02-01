@@ -3,13 +3,11 @@ using UnityEngine;
 using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 
 public class ScriptDownloaderEditor : EditorWindow
 {
-
     private bool createScripts = true;
     private bool createMaterials = true;
     private bool createMusic = true;
@@ -18,98 +16,97 @@ public class ScriptDownloaderEditor : EditorWindow
     private bool createTextures = true;
     private bool createEditor = true;
     private bool downloadGitIgnore = true;
-    private string readmeContent = "
+
+    private string readmeContent =
+@"# Unity Project Setup
+
 ## Description
+This project is a Unity3D-based game setup tool designed to streamline development by automating the creation of folders, downloading essential scripts, and managing Unity packages.
 
 ## Features
-
+- Auto-create project structure (Scripts, Materials, Prefabs, etc.).
+- Download essential Unity C# scripts from a remote repository.
+- Automatically download a `.gitignore` file for Unity projects.
+- Manage Unity package dependencies (add/remove packages).
+- Generate a `README.md` file with basic project information.
 
 ## Gameplay
-
+Provide a brief explanation of the game mechanics.
 
 ## PlantUML Diagrams
-
 ### Class Diagram
-
 ![Class Diagram](include.png)
 
-
 ## Screenshots
+<!-- ![Screenshot 2](screenshots/screenshot2.png) -->
 
-< !--! [Screenshot 2](screenshots / screenshot2.png)-- >
 ## Development
+This project is developed using Unity3D and C#. Contributions are welcome, including bug fixes, feature enhancements, and optimizations.
 
-This game is developed using Unity3D game engine and programmed in C#. Contributions are welcome, whether it's bug fixes, feature enhancements, or optimizations.
 ## Credits
-
-This game remake is created by Developer Name .
+This game remake is created by Developer Name.
 
 ## Feedback
-
 If you have any feedback, suggestions, or bug reports, please open an issue on GitHub or contact us directly.
 
-Prepare for liftoff and enjoy your journey to the International Space Station!";
+Prepare for liftoff and enjoy your journey to the International Space Station! 🚀";
 
-[MenuItem("Tools/Setup/Script Downloader")]
-public static void ShowWindow()
-{
-    GetWindow<ScriptDownloaderEditor>("Script Downloader");
-}
-
-private void OnGUI()
-{
-
-
-    GUILayout.Label("Folder Setup", EditorStyles.boldLabel);
-    createScripts = EditorGUILayout.Toggle("Scripts", createScripts);
-    createMaterials = EditorGUILayout.Toggle("Materials", createMaterials);
-    createMusic = EditorGUILayout.Toggle("Music", createMusic);
-    createPrefabs = EditorGUILayout.Toggle("Prefabs", createPrefabs);
-    createModels = EditorGUILayout.Toggle("Models", createModels);
-    createTextures = EditorGUILayout.Toggle("Textures", createTextures);
-    createEditor = EditorGUILayout.Toggle("Editor", createEditor);
-
-    if (GUILayout.Button("Create Folders"))
+    [MenuItem("Tools/Setup/Script Downloader")]
+    public static void ShowWindow()
     {
-        CreateSelectedFolders();
+        GetWindow<ScriptDownloaderEditor>("Script Downloader");
     }
 
-    GUILayout.Label("README Setup", EditorStyles.boldLabel);
-    readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
-
-    if (GUILayout.Button("Create README"))
+    private void OnGUI()
     {
-        CreateReadmeFile();
+        GUILayout.Label("Folder Setup", EditorStyles.boldLabel);
+        createScripts = EditorGUILayout.Toggle("Scripts", createScripts);
+        createMaterials = EditorGUILayout.Toggle("Materials", createMaterials);
+        createMusic = EditorGUILayout.Toggle("Music", createMusic);
+        createPrefabs = EditorGUILayout.Toggle("Prefabs", createPrefabs);
+        createModels = EditorGUILayout.Toggle("Models", createModels);
+        createTextures = EditorGUILayout.Toggle("Textures", createTextures);
+        createEditor = EditorGUILayout.Toggle("Editor", createEditor);
+
+        if (GUILayout.Button("Create Folders"))
+        {
+            CreateSelectedFolders();
+        }
+
+        GUILayout.Label("README Setup", EditorStyles.boldLabel);
+        readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
+
+        if (GUILayout.Button("Create README"))
+        {
+            CreateReadmeFile();
+        }
+
+        GUILayout.Label("Download Scripts", EditorStyles.boldLabel);
+        if (GUILayout.Button("Download Scripts"))
+        {
+            _ = GettingTemplateScripts(); // Fire and forget async call
+        }
+
+        GUILayout.Label("Download .gitignore", EditorStyles.boldLabel);
+        downloadGitIgnore = EditorGUILayout.Toggle("Download .gitignore", downloadGitIgnore);
+
+        if (GUILayout.Button("Download .gitignore"))
+        {
+            _ = GettingGitIgnore(); // Fire and forget async call
+        }
+
+        GUILayout.Label("Package Management", EditorStyles.boldLabel);
+        if (GUILayout.Button("Add/Remove Necessary Packages"))
+        {
+            _ = AddRemoveNecessaryPackages(); // Fire and forget async call
+        }
     }
 
-    GUILayout.Label("Download Scripts", EditorStyles.boldLabel);
-    if (GUILayout.Button("Download Scripts"))
+    private void CreateSelectedFolders()
     {
-        _ = GettingTemplateScripts(); // Fire and forget async call
-    }
-
-    GUILayout.Label("Download .gitignore", EditorStyles.boldLabel);
-    downloadGitIgnore = EditorGUILayout.Toggle("Download .gitignore", downloadGitIgnore);
-
-    if (GUILayout.Button("Download .gitignore"))
-    {
-        _ = GettingGitIgnore(); // Fire and forget async call
-    }
-
-    GUILayout.Label("Package Management", EditorStyles.boldLabel);
-    if (GUILayout.Button("Add/Remove Necessary Packages"))
-    {
-        _ = AddRemoveNecessaryPackages(); // Fire and forget async call
-    }
-}
-
-
-
-private void CreateSelectedFolders()
-{
-    string projectPath = Application.dataPath;
-    string[] folders = new string[]
-    {
+        string projectPath = Application.dataPath;
+        string[] folders = new string[]
+        {
             createScripts ? "Scripts" : null,
             createMaterials ? "Materials" : null,
             createMusic ? "Music" : null,
@@ -117,56 +114,56 @@ private void CreateSelectedFolders()
             createModels ? "Models" : null,
             createTextures ? "Textures" : null,
             createEditor ? "Editor" : null
-    };
+        };
 
-    foreach (string folder in folders)
-    {
-        if (folder != null)
+        foreach (string folder in folders)
         {
-            string fullPath = Path.Combine(projectPath, "Project", folder);
-            if (!Directory.Exists(fullPath))
+            if (folder != null)
             {
-                Directory.CreateDirectory(fullPath);
-                UnityEngine.Debug.Log($"Created folder: {fullPath}");
+                string fullPath = Path.Combine(projectPath, "Project", folder);
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                    UnityEngine.Debug.Log($"Created folder: {fullPath}");
+                }
+                else
+                {
+                    UnityEngine.Debug.Log($"Folder already exists: {fullPath}");
+                }
             }
-            else
-            {
-                UnityEngine.Debug.Log($"Folder already exists: {fullPath}");
-            }
+        }
+
+        AssetDatabase.Refresh();
+    }
+
+    private void CreateReadmeFile()
+    {
+        string projectPath = Application.dataPath.Replace("/Assets", "");
+        string readmePath = Path.Combine(projectPath, "README.md");
+
+        try
+        {
+            File.WriteAllText(readmePath, readmeContent);
+            UnityEngine.Debug.Log($"README file created at: {readmePath}");
+        }
+        catch (System.Exception ex)
+        {
+            UnityEngine.Debug.LogError($"Error creating README file: {ex.Message}");
         }
     }
 
-    AssetDatabase.Refresh();
-}
-
-private void CreateReadmeFile()
-{
-    string projectPath = Application.dataPath.Replace("/Assets", "");
-    string readmePath = Path.Combine(projectPath, "README.md");
-
-    try
+    public static async Task GettingTemplateScripts()
     {
-        File.WriteAllText(readmePath, readmeContent);
-        UnityEngine.Debug.Log($"README file created at: {readmePath}");
-    }
-    catch (System.Exception ex)
-    {
-        UnityEngine.Debug.LogError($"Error creating README file: {ex.Message}");
-    }
-}
+        string folderPath = Application.dataPath;
 
-public static async Task GettingTemplateScripts()
-{
-    string folderPath = Application.dataPath;
-
-    string[] fileUrls = {
+        string[] fileUrls = {
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/CustomScriptsTemplate.cs",
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScript.cs.txt",
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewEnum.cs.Txt",
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewScriptableObject.cs.txt",
             "https://raw.githubusercontent.com/Avin19/UnityTools/main/Template/NewClass.cs.txt"
         };
-    string[] fileNames = {
+        string[] fileNames = {
             "CustomScriptsTemplate.cs",
             "NewScript.cs.txt",
             "NewEnum.cs.txt",
@@ -174,107 +171,103 @@ public static async Task GettingTemplateScripts()
             "NewClass.cs.txt"
         };
 
-    for (int i = 0; i < fileUrls.Length; i++)
-    {
-        string fullPath = Path.Combine(folderPath, "Project\\Editor\\Template", fileNames[i]);
+        for (int i = 0; i < fileUrls.Length; i++)
+        {
+            string fullPath = Path.Combine(folderPath, "Project\\Editor\\Template", fileNames[i]);
 
-        // Ensure the directory exists
-        Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
+            // Ensure the directory exists
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
 
-        await DownloadFileAsync(fileUrls[i], fullPath);
+            await DownloadFileAsync(fileUrls[i], fullPath);
+        }
+
+        UnityEngine.Debug.Log("All scripts downloaded successfully.");
     }
 
-    UnityEngine.Debug.Log("All scripts downloaded successfully.");
-}
-
-private static async Task DownloadFileAsync(string url, string filePath)
-{
-    using (HttpClient client = new HttpClient())
+    public static async Task GettingGitIgnore()
     {
-        try
+        string folderPath = Application.dataPath.Replace("/Assets", "");
+        string fileUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore";
+        string filePath = Path.Combine(folderPath, ".gitignore");
+        await DownloadFileAsync(fileUrl, filePath);
+        UnityEngine.Debug.Log("Downloaded .gitignore file.");
+    }
+    private static async Task DownloadFileAsync(string url, string filePath)
+    {
+        using (HttpClient client = new HttpClient())
         {
-            // Send a GET request to the specified URL
-            HttpResponseMessage response = await client.GetAsync(url);
+            try
+            {
+                // Send a GET request to the specified URL
+                HttpResponseMessage response = await client.GetAsync(url);
 
-            // Ensure the request was successful
-            response.EnsureSuccessStatusCode();
+                // Ensure the request was successful
+                response.EnsureSuccessStatusCode();
 
-            // Read the response content as a byte array
-            byte[] fileBytes = await response.Content.ReadAsByteArrayAsync();
+                // Read the response content as a byte array
+                byte[] fileBytes = await response.Content.ReadAsByteArrayAsync();
 
-            // Write the byte array to the specified file
-            await File.WriteAllBytesAsync(filePath, fileBytes);
+                // Write the byte array to the specified file
+                await File.WriteAllBytesAsync(filePath, fileBytes);
 
-            UnityEngine.Debug.Log($"Downloaded and saved file to {filePath}");
-        }
-        catch (System.Exception ex)
-        {
-            UnityEngine.Debug.LogError($"An error occurred while downloading {url}: {ex.Message}");
+                UnityEngine.Debug.Log($"Downloaded and saved file to {filePath}");
+            }
+            catch (System.Exception ex)
+            {
+                UnityEngine.Debug.LogError($"An error occurred while downloading {url}: {ex.Message}");
+            }
         }
     }
-}
-
-public static async Task GettingGitIgnore()
-{
-    string folderPath = Application.dataPath.Replace("/Assets", "");
-    string fileUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore";
-    string filePath = Path.Combine(folderPath, ".gitignore");
-    await DownloadFileAsync(fileUrl, filePath);
-    UnityEngine.Debug.Log("Downloaded .gitignore file.");
-}
-
-public static async Task AddRemoveNecessaryPackages()
-{
-    string[] packagesToAdd = { "com.unity.ide.visualstudio", "com.unity.textmeshpro", "com.unity.inputsystem" };
-    string[] packagesToRemove = { "com.unity.visualscripting", "com.unity.ide.rider", "com.unity.timeline" };
-
-    await AddPackages(packagesToAdd);
-    await RemovePackages(packagesToRemove);
-
-    Resolve();
-}
-
-private static async Task AddPackages(string[] packages)
-{
-    foreach (string package in packages)
+    public static async Task AddRemoveNecessaryPackages()
     {
-        AddRequest request = Client.Add(package);
-        while (!request.IsCompleted)
-            await Task.Yield();
+        string[] packagesToAdd = { "com.unity.ide.visualstudio", "com.unity.textmeshpro", "com.unity.inputsystem" };
+        string[] packagesToRemove = { "com.unity.visualscripting", "com.unity.ide.rider", "com.unity.timeline" };
 
-        if (request.Status == StatusCode.Success)
+        await AddPackages(packagesToAdd);
+        await RemovePackages(packagesToRemove);
+
+        Resolve();
+    }
+    private static async Task AddPackages(string[] packages)
+    {
+        foreach (string package in packages)
         {
-            UnityEngine.Debug.Log($"Successfully added package: {package}");
-        }
-        else if (request.Status >= StatusCode.Failure)
-        {
-            UnityEngine.Debug.LogError($"Failed to add package: {package}, Error: {request.Error.message}");
+            AddRequest request = Client.Add(package);
+            while (!request.IsCompleted)
+                await Task.Yield();
+
+            if (request.Status == StatusCode.Success)
+            {
+                UnityEngine.Debug.Log($"Successfully added package: {package}");
+            }
+            else if (request.Status >= StatusCode.Failure)
+            {
+                UnityEngine.Debug.LogError($"Failed to add package: {package}, Error: {request.Error.message}");
+            }
         }
     }
-}
 
-private static async Task RemovePackages(string[] packages)
-{
-    foreach (string package in packages)
+    private static async Task RemovePackages(string[] packages)
     {
-        RemoveRequest request = Client.Remove(package);
-        while (!request.IsCompleted)
-            await Task.Yield();
+        foreach (string package in packages)
+        {
+            RemoveRequest request = Client.Remove(package);
+            while (!request.IsCompleted)
+                await Task.Yield();
 
-        if (request.Status == StatusCode.Success)
-        {
-            UnityEngine.Debug.Log($"Successfully removed package: {package}");
-        }
-        else if (request.Status >= StatusCode.Failure)
-        {
-            UnityEngine.Debug.LogError($"Failed to remove package: {package}, Error: {request.Error.message}");
+            if (request.Status == StatusCode.Success)
+            {
+                UnityEngine.Debug.Log($"Successfully removed package: {package}");
+            }
+            else if (request.Status >= StatusCode.Failure)
+            {
+                UnityEngine.Debug.LogError($"Failed to remove package: {package}, Error: {request.Error.message}");
+            }
         }
     }
-}
-
-private static void Resolve()
-{
-    Client.Resolve();
-    UnityEngine.Debug.Log("Packages resolved.");
-}
+    private static void Resolve()
+    {
+        Client.Resolve();
+        UnityEngine.Debug.Log("Packages resolved.");
+    }
 }
