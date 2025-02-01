@@ -1,7 +1,5 @@
 # Unity Project Setup Automation
 
-
-
 ```bash
 curl -o Assets\ScriptDownloaderEditor.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/ScriptDownloaderEditor.cs 
 ```
@@ -84,7 +82,7 @@ curl -o .gitignore https://raw.githubusercontent.com/w3villa-avinash/UnityTool/m
 curl -OJL https://raw.githubusercontent.com/w3villa-avinash/UnityTool/main/Tools.cs
 
 
-``` -->
+``` 
 ### Windows Support Only 
 
 ```bash
@@ -92,7 +90,7 @@ curl -OJL https://raw.githubusercontent.com/w3villa-avinash/UnityTool/main/Tools
 curl -o Assets\ScriptDownloaderEditor.cs https://raw.githubusercontent.com/Avin19/UnityTools/main/ScriptDownloaderEditor.cs 
 ```
 
-<!-- ### Editior Scritps 
+ ### Editior Scritps 
 
 ```bash 
 
@@ -106,19 +104,16 @@ curl -O Template\NewClass.cs.txt https://raw.githubusercontent.com/Avin19/UnityT
 ``` -->
 
 
-
-
-
-
 ## To Do List 
 
 - [x] Reduce the Number of Setup using bash script 
 - [x] Once Everything is done remove all the Tools relate scripts 
-- [ ] PlantUML generator .
+- [x] PlantUML generator .
 
 
 ### PlantUml Diagram Generator 
 
+```bash
 puml-gen C:\Source\App1 C:\PlantUml\App1 -dir -ignore Private,Protected -createAssociation -allInOne
 puml-gen {Input/Scripts/} {Out/plantuml} -dir -ignore Private,protected -createAssociation -allInOne 
 
@@ -126,6 +121,13 @@ puml-gen {Input/Scripts/} {Out/plantuml} -dir -ignore Private,protected -createA
 puml-gen C:\Source\App1 C:\PlantUml\App1 -dir -excludePaths bin,obj,Properties
 
 
+puml-gen Scripts PlantUml -dir --ignore Private,Protected -createAssociation -allInOne
+puml-gen Assets/Scritps out -dir  -excludePaths bin,obj,Properties -createAssociation -allInOne
+
+```
+
 For more information take a look at 
+
+
 ![Click Here](https://github.com/pierre3/PlantUmlClassDiagramGenerator)
 
