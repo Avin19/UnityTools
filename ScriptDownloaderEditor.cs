@@ -9,6 +9,7 @@ using UnityEditor.PackageManager.Requests;
 public class ScriptDownloaderEditor : EditorWindow
 {
     private bool createScripts = true;
+    private bool createSprite = true;
     private bool createMaterials = true;
     private bool createMusic = true;
     private bool createPrefabs = true;
@@ -61,6 +62,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
     {
         GUILayout.Label("Folder Setup", EditorStyles.boldLabel);
         createScripts = EditorGUILayout.Toggle("Scripts", createScripts);
+        createSprite = EditorGUILayout.Toggle("Sprite", createSprite);
         createMaterials = EditorGUILayout.Toggle("Materials", createMaterials);
         createMusic = EditorGUILayout.Toggle("Music", createMusic);
         createPrefabs = EditorGUILayout.Toggle("Prefabs", createPrefabs);
@@ -72,7 +74,10 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         {
             CreateSelectedFolders();
         }
-
+        if (GUILayout.Button("Download Basic UI Sprite"))
+        {
+            // _ = GettingSprite();
+        }
         GUILayout.Label("README Setup", EditorStyles.boldLabel);
         readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
 
@@ -101,6 +106,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             _ = AddRemoveNecessaryPackages(); // Fire and forget async call
         }
     }
+
 
     private void CreateSelectedFolders()
     {
