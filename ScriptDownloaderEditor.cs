@@ -78,7 +78,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         {
             CreateSelectedFolders();
         }
-        GUILayout.Label("Unity Package Management", EditorStyles.boldLabel);
+        GUILayout.Label("UI Package Management", EditorStyles.boldLabel);
         if (GUILayout.Button("Download & Install UnityPackage"))
         {
             _ = DownloadAndInstallPackage();
@@ -110,6 +110,8 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         {
             _ = AddRemoveNecessaryPackages(); // Fire and forget async call
         }
+        GUILayout.Label("PLANTUml Digram generator ", EditorStyles.boldLabel);
+        GUILayout.Label(" puml-gen Scripts PlantUml -dir --ignore Private,Protected -createAssociation -allInOne", EditorStyles.boldLabel);
     }
 
 
