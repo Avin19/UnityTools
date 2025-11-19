@@ -79,10 +79,19 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             CreateSelectedFolders();
         }
         GUILayout.Label("UI Package Management", EditorStyles.boldLabel);
-        if (GUILayout.Button("Download & Install UnityPackage"))
+        if (GUILayout.Button("Download & Install UnityPackage (Custom URL)"))
         {
             _ = DownloadAndInstallPackage();
         }
+
+        // NEW: Google Mobile Ads package downloader
+        GUILayout.Space(6);
+        GUILayout.Label("Google Mobile Ads", EditorStyles.boldLabel);
+        if (GUILayout.Button("Download & Install GoogleMobileAds v10.6.0"))
+        {
+            _ = DownloadAndInstallGoogleMobileAdsPackage();
+        }
+
         GUILayout.Label("README Setup", EditorStyles.boldLabel);
         readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
 
@@ -156,7 +165,32 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
 
         await DownloadFileAsync(packageUrl, packagePath); // Download the package
 
-        InstallUnityPackage(packagePath);
+        // Import on main thread
+        EditorApplication.delayCall += () => InstallUnityPackage(packagePath);
+    }
+
+    // NEW: Download Google Mobile Ads Unity package v10.6.0
+    private static async Task DownloadAndInstallGoogleMobileAdsPackage()
+    {
+        string gmUrl = "https://github.com/googleads/googleads-mobile-unity/releases/download/v10.6.0/GoogleMobileAds-v10.6.0.unitypackage";
+        string savePath = Path.Combine(Application.dataPath, "..", "GoogleMobileAds-v10.6.0.unitypackage");
+
+        UnityEngine.Debug.Log($"Starting download of Google Mobile Ads package to: {savePath}");
+        await DownloadFileAsync(gmUrl, savePath);
+
+        // Import package on main thread to be safe
+        EditorApplication.delayCall += () =>
+        {
+            if (File.Exists(savePath))
+            {
+                InstallUnityPackage(savePath);
+                EditorUtility.DisplayDialog("Download Complete", "Google Mobile Ads package downloaded and will be imported.", "OK");
+            }
+            else
+            {
+                EditorUtility.DisplayDialog("Download Failed", "Google Mobile Ads package was not downloaded. Check console for errors.", "OK");
+            }
+        };
     }
 
     private static void InstallUnityPackage(string filePath)
@@ -217,6 +251,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         }
 
         UnityEngine.Debug.Log("All scripts downloaded successfully.");
+        EditorApplication.delayCall += AssetDatabase.Refresh;
     }
 
     public static async Task GettingGitIgnore()
@@ -226,6 +261,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         string filePath = Path.Combine(folderPath, ".gitignore");
         await DownloadFileAsync(fileUrl, filePath);
         UnityEngine.Debug.Log("Downloaded .gitignore file.");
+        EditorApplication.delayCall += AssetDatabase.Refresh;
     }
     private static async Task DownloadFileAsync(string url, string filePath)
     {
@@ -241,6 +277,13 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
 
                 // Read the response content as a byte array
                 byte[] fileBytes = await response.Content.ReadAsByteArrayAsync();
+
+                // Ensure directory exists
+                string dir = Path.GetDirectoryName(filePath);
+                if (!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
 
                 // Write the byte array to the specified file
                 await File.WriteAllBytesAsync(filePath, fileBytes);
