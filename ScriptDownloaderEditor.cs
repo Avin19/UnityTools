@@ -1,3 +1,6 @@
+// ScriptDownloaderEditor.cs
+// Place this file inside an Editor folder: Assets/Editor/ScriptDownloaderEditor.cs
+
 using UnityEditor;
 using UnityEngine;
 using System.IO;
@@ -17,9 +20,6 @@ public class ScriptDownloaderEditor : EditorWindow
     private bool createTextures = true;
     private bool createEditor = true;
     private bool downloadGitIgnore = true;
-
-    private static string unityPackageUrl = "https://github.com/Avin19/UnityTools/blob/main/UIPackage.unitypackage"; // Update with your actual URL
-    private static string localPackagePath = "\\Assets\\DownloadedPackages\\MyPackage.unitypackage"; // Local storage path
 
     private string readmeContent =
 @"# Unity Project Setup
@@ -55,12 +55,18 @@ If you have any feedback, suggestions, or bug reports, please open an issue on G
 
 Prepare for liftoff and enjoy your journey to the International Space Station! ðŸš€";
 
+    // Google Mobile Ads package URL & filename
+    private const string GoogleMobileAdsUrl = "https://github.com/googleads/googleads-mobile-unity/releases/download/v10.6.0/GoogleMobileAds-v10.6.0.unitypackage";
+    private const string GoogleMobileAdsFileName = "GoogleMobileAds-v10.6.0.unitypackage";
+
+    // AdManager raw file URL for the exact commit the user provided
+    private const string AdManagerRawUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/6f925b8bad0e80425a9efd64a695a1057ca01bdc/Ads/AdManager.cs";
+
     [MenuItem("Tools/Setup/Script Downloader")]
     public static void ShowWindow()
     {
         GetWindow<ScriptDownloaderEditor>("Script Downloader");
     }
-
 
     private void OnGUI()
     {
@@ -78,13 +84,14 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         {
             CreateSelectedFolders();
         }
+
+        GUILayout.Space(8);
         GUILayout.Label("UI Package Management", EditorStyles.boldLabel);
         if (GUILayout.Button("Download & Install UnityPackage (Custom URL)"))
         {
-            _ = DownloadAndInstallPackage();
+            _ = DownloadAndInstallPackage(); // previously provided generic package downloader
         }
 
-        // NEW: Google Mobile Ads package downloader
         GUILayout.Space(6);
         GUILayout.Label("Google Mobile Ads", EditorStyles.boldLabel);
         if (GUILayout.Button("Download & Install GoogleMobileAds v10.6.0"))
@@ -92,6 +99,14 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             _ = DownloadAndInstallGoogleMobileAdsPackage();
         }
 
+        GUILayout.Space(6);
+        GUILayout.Label("Ad Scripts", EditorStyles.boldLabel);
+        if (GUILayout.Button("Download AdManager.cs from GitHub (specific commit)"))
+        {
+            _ = DownloadAdManagerScript();
+        }
+
+        GUILayout.Space(6);
         GUILayout.Label("README Setup", EditorStyles.boldLabel);
         readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
 
@@ -100,12 +115,14 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             CreateReadmeFile();
         }
 
+        GUILayout.Space(6);
         GUILayout.Label("Download Scripts", EditorStyles.boldLabel);
-        if (GUILayout.Button("Download Scripts"))
+        if (GUILayout.Button("Download Template Scripts"))
         {
             _ = GettingTemplateScripts(); // Fire and forget async call
         }
 
+        GUILayout.Space(6);
         GUILayout.Label("Download .gitignore", EditorStyles.boldLabel);
         downloadGitIgnore = EditorGUILayout.Toggle("Download .gitignore", downloadGitIgnore);
 
@@ -114,15 +131,17 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             _ = GettingGitIgnore(); // Fire and forget async call
         }
 
+        GUILayout.Space(6);
         GUILayout.Label("Package Management", EditorStyles.boldLabel);
         if (GUILayout.Button("Add/Remove Necessary Packages"))
         {
             _ = AddRemoveNecessaryPackages(); // Fire and forget async call
         }
-        GUILayout.Label("PLANTUml Digram generator ", EditorStyles.boldLabel);
-        GUILayout.Label(" puml-gen Scripts PlantUml -dir --ignore Private,Protected -createAssociation -allInOne", EditorStyles.boldLabel);
-    }
 
+        GUILayout.Space(8);
+        GUILayout.Label("PLANTUml Diagram generator", EditorStyles.boldLabel);
+        GUILayout.Label("puml-gen Scripts PlantUml -dir --ignore Private,Protected -createAssociation -allInOne", EditorStyles.miniLabel);
+    }
 
     private void CreateSelectedFolders()
     {
@@ -158,39 +177,52 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         AssetDatabase.Refresh();
     }
 
+    // Generic package downloader (your existing UI package downloader)
     private static async Task DownloadAndInstallPackage()
     {
         string packageUrl = "https://github.com/Avin19/UnityTools/raw/main/UIPackage.unitypackage"; // Use the correct direct URL
         string packagePath = Path.Combine(Application.dataPath, "..", "UIPackage.unitypackage"); // Save outside "Assets"
 
-        await DownloadFileAsync(packageUrl, packagePath); // Download the package
+        EditorUtility.DisplayProgressBar("Downloading Package", "Downloading package...", 0.1f);
+        await DownloadFileAsync(packageUrl, packagePath);
+        EditorUtility.ClearProgressBar();
 
         // Import on main thread
         EditorApplication.delayCall += () => InstallUnityPackage(packagePath);
     }
 
-    // NEW: Download Google Mobile Ads Unity package v10.6.0
+    // Download & install Google Mobile Ads unitypackage
     private static async Task DownloadAndInstallGoogleMobileAdsPackage()
     {
-        string gmUrl = "https://github.com/googleads/googleads-mobile-unity/releases/download/v10.6.0/GoogleMobileAds-v10.6.0.unitypackage";
-        string savePath = Path.Combine(Application.dataPath, "..", "GoogleMobileAds-v10.6.0.unitypackage");
+        string savePath = Path.Combine(Application.dataPath, "..", GoogleMobileAdsFileName);
 
-        UnityEngine.Debug.Log($"Starting download of Google Mobile Ads package to: {savePath}");
-        await DownloadFileAsync(gmUrl, savePath);
-
-        // Import package on main thread to be safe
-        EditorApplication.delayCall += () =>
+        try
         {
-            if (File.Exists(savePath))
+            EditorUtility.DisplayProgressBar("Downloading Google Mobile Ads", "Downloading package...", 0.05f);
+            await DownloadFileAsync(GoogleMobileAdsUrl, savePath);
+            EditorUtility.DisplayProgressBar("Downloading Google Mobile Ads", "Finalizing...", 0.9f);
+
+            // Import package on main thread to be safe
+            EditorApplication.delayCall += () =>
             {
-                InstallUnityPackage(savePath);
-                EditorUtility.DisplayDialog("Download Complete", "Google Mobile Ads package downloaded and will be imported.", "OK");
-            }
-            else
-            {
-                EditorUtility.DisplayDialog("Download Failed", "Google Mobile Ads package was not downloaded. Check console for errors.", "OK");
-            }
-        };
+                if (File.Exists(savePath))
+                {
+                    InstallUnityPackage(savePath);
+                    EditorUtility.DisplayDialog("Download Complete", "Google Mobile Ads package downloaded and will be imported.", "OK");
+                }
+                else
+                {
+                    EditorUtility.DisplayDialog("Download Failed", "Google Mobile Ads package was not downloaded. Check console for errors.", "OK");
+                }
+                EditorUtility.ClearProgressBar();
+            };
+        }
+        catch (System.Exception ex)
+        {
+            EditorUtility.ClearProgressBar();
+            UnityEngine.Debug.LogError("Error downloading Google Mobile Ads package: " + ex.Message);
+            EditorUtility.DisplayDialog("Download Failed", "Error downloading Google Mobile Ads package. See console for details.", "OK");
+        }
     }
 
     private static void InstallUnityPackage(string filePath)
@@ -205,6 +237,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             UnityEngine.Debug.LogError("Unity Package not found!");
         }
     }
+
     private void CreateReadmeFile()
     {
         string projectPath = Application.dataPath.Replace("/Assets", "");
@@ -214,10 +247,13 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         {
             File.WriteAllText(readmePath, readmeContent);
             UnityEngine.Debug.Log($"README file created at: {readmePath}");
+            EditorUtility.DisplayDialog("README Created", $"README.md written to {readmePath}", "OK");
+            AssetDatabase.Refresh();
         }
         catch (System.Exception ex)
         {
             UnityEngine.Debug.LogError($"Error creating README file: {ex.Message}");
+            EditorUtility.DisplayDialog("Error", $"Error creating README: {ex.Message}", "OK");
         }
     }
 
@@ -240,16 +276,21 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             "NewClass.cs.txt"
         };
 
+        EditorUtility.DisplayProgressBar("Downloading Templates", "Downloading template scripts...", 0.05f);
+
         for (int i = 0; i < fileUrls.Length; i++)
         {
-            string fullPath = Path.Combine(folderPath, "Project\\Editor\\Template", fileNames[i]);
+            string fullPath = Path.Combine(folderPath, "Project", "Editor", "Template", fileNames[i]);
 
             // Ensure the directory exists
             Directory.CreateDirectory(Path.GetDirectoryName(fullPath));
 
             await DownloadFileAsync(fileUrls[i], fullPath);
+            float p = 0.05f + 0.9f * ((i + 1) / (float)fileUrls.Length);
+            EditorUtility.DisplayProgressBar("Downloading Templates", $"Downloading {fileNames[i]}...", p);
         }
 
+        EditorUtility.ClearProgressBar();
         UnityEngine.Debug.Log("All scripts downloaded successfully.");
         EditorApplication.delayCall += AssetDatabase.Refresh;
     }
@@ -259,10 +300,72 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         string folderPath = Application.dataPath.Replace("/Assets", "");
         string fileUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/main/.gitignore";
         string filePath = Path.Combine(folderPath, ".gitignore");
+
+        EditorUtility.DisplayProgressBar("Downloading .gitignore", "Downloading .gitignore...", 0.05f);
         await DownloadFileAsync(fileUrl, filePath);
+        EditorUtility.ClearProgressBar();
+
         UnityEngine.Debug.Log("Downloaded .gitignore file.");
         EditorApplication.delayCall += AssetDatabase.Refresh;
     }
+
+    // ---------- NEW: Download AdManager.cs from a specific commit ----------
+    private static async Task DownloadAdManagerScript()
+    {
+        string scriptsFolder = Path.Combine(Application.dataPath, "Scripts");
+        string savePath = Path.Combine(scriptsFolder, "AdManager.cs");
+
+        try
+        {
+            // Make sure folder exists
+            if (!Directory.Exists(scriptsFolder))
+            {
+                Directory.CreateDirectory(scriptsFolder);
+            }
+
+            // If file exists ask user before overwriting
+            if (File.Exists(savePath))
+            {
+                bool overwrite = EditorUtility.DisplayDialog(
+                    "Overwrite file?",
+                    "Assets/Scripts/AdManager.cs already exists. Do you want to overwrite it?",
+                    "Overwrite",
+                    "Cancel"
+                );
+
+                if (!overwrite)
+                {
+                    Debug.Log("Download cancelled by user.");
+                    return;
+                }
+            }
+
+            EditorUtility.DisplayProgressBar("Downloading AdManager.cs", "Downloading script...", 0.05f);
+            await DownloadFileAsync(AdManagerRawUrl, savePath);
+            EditorUtility.ClearProgressBar();
+
+            // Import & refresh on main thread
+            EditorApplication.delayCall += () =>
+            {
+                AssetDatabase.Refresh();
+                UnityEngine.Object asset = AssetDatabase.LoadMainAssetAtPath("Assets/Scripts/AdManager.cs");
+                if (asset != null)
+                {
+                    EditorGUIUtility.PingObject(asset);
+                }
+
+                EditorUtility.DisplayDialog("Download Complete", "AdManager.cs has been downloaded to Assets/Scripts.", "OK");
+            };
+        }
+        catch (System.Exception ex)
+        {
+            EditorUtility.ClearProgressBar();
+            UnityEngine.Debug.LogError("Error downloading AdManager.cs: " + ex.Message);
+            EditorUtility.DisplayDialog("Download Failed", "Error downloading AdManager.cs. See console for details.", "OK");
+        }
+    }
+
+    // Generic async file downloader used by multiple methods above
     private static async Task DownloadFileAsync(string url, string filePath)
     {
         using (HttpClient client = new HttpClient())
@@ -293,9 +396,12 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             catch (System.Exception ex)
             {
                 UnityEngine.Debug.LogError($"An error occurred while downloading {url}: {ex.Message}");
+                throw;
             }
         }
     }
+
+    // ---------------- Package Manager helpers ----------------
     public static async Task AddRemoveNecessaryPackages()
     {
         string[] packagesToAdd = { "com.unity.ide.visualstudio", "com.unity.textmeshpro", "com.unity.inputsystem" };
@@ -306,6 +412,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
 
         Resolve();
     }
+
     private static async Task AddPackages(string[] packages)
     {
         foreach (string package in packages)
@@ -343,6 +450,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             }
         }
     }
+
     private static void Resolve()
     {
         Client.Resolve();
