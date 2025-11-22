@@ -93,8 +93,8 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
         }
 
         GUILayout.Space(6);
-        GUILayout.Label("Google Mobile Ads", EditorStyles.boldLabel);
-        if (GUILayout.Button("Download & Install GoogleMobileAds v10.6.0"))
+        GUILayout.Label("Advertisement Legacy", EditorStyles.boldLabel);
+        if (GUILayout.Button("Download & Install Advertisement Legacy"))
         {
             _ = DownloadAndInstallGoogleMobileAdsPackage();
         }
@@ -194,35 +194,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
     // Download & install Google Mobile Ads unitypackage
     private static async Task DownloadAndInstallGoogleMobileAdsPackage()
     {
-        string savePath = Path.Combine(Application.dataPath, "..", GoogleMobileAdsFileName);
-
-        try
-        {
-            EditorUtility.DisplayProgressBar("Downloading Google Mobile Ads", "Downloading package...", 0.05f);
-            await DownloadFileAsync(GoogleMobileAdsUrl, savePath);
-            EditorUtility.DisplayProgressBar("Downloading Google Mobile Ads", "Finalizing...", 0.9f);
-
-            // Import package on main thread to be safe
-            EditorApplication.delayCall += () =>
-            {
-                if (File.Exists(savePath))
-                {
-                    InstallUnityPackage(savePath);
-                    EditorUtility.DisplayDialog("Download Complete", "Google Mobile Ads package downloaded and will be imported.", "OK");
-                }
-                else
-                {
-                    EditorUtility.DisplayDialog("Download Failed", "Google Mobile Ads package was not downloaded. Check console for errors.", "OK");
-                }
-                EditorUtility.ClearProgressBar();
-            };
-        }
-        catch (System.Exception ex)
-        {
-            EditorUtility.ClearProgressBar();
-            UnityEngine.Debug.LogError("Error downloading Google Mobile Ads package: " + ex.Message);
-            EditorUtility.DisplayDialog("Download Failed", "Error downloading Google Mobile Ads package. See console for details.", "OK");
-        }
+        AddPackages("com.unity.ads");
     }
 
     private static void InstallUnityPackage(string filePath)
@@ -348,7 +320,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             EditorApplication.delayCall += () =>
             {
                 AssetDatabase.Refresh();
-                UnityEngine.Object asset = AssetDatabase.LoadMainAssetAtPath("Assets/Scripts/AdManager.cs");
+                UnityEngine.Object asset = AssetDatabase.LoadMainAssetAtPath("Assets/Project/Scripts/AdManager.cs");
                 if (asset != null)
                 {
                     EditorGUIUtility.PingObject(asset);

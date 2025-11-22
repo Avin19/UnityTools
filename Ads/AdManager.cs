@@ -1,311 +1,341 @@
 using System;
 using UnityEngine;
-using GoogleMobileAds.Api;
+using UnityEngine.Advertisements;
 
-/// <summary>
-/// AdManager Singleton for Unity using Google Mobile Ads (AdMob).
-/// Updated for recent Google Mobile Ads Unity SDK (no MobileAdsEventExecutor).
-///
-/// Features:
-/// - Initialization
-/// - Banner (load/show/hide/destroy)
-/// - Interstitial (load/show, auto-reload on close)
-/// - Rewarded (load/show, reward callback)
-/// - RewardedInterstitial (optional)
-/// - Public events for game hooks
-///
-/// Usage:
-/// - Place this script on a GameObject in your initial scene or let it be present in a bootstrap scene.
-/// - Use AdManager.Instance.ShowInterstitial(); AdManager.Instance.ShowRewarded(); AdManager.Instance.ShowBanner();
-/// - Subscribe to OnUserEarnedReward to grant rewards.
-///
-/// Notes:
-/// - Replace test Ad Unit IDs with your production IDs before releasing.
-/// - Ensure you have the Google Mobile Ads Unity plugin imported and dependencies resolved.
-/// </summary>
-
-public class AdManager : MonoBehaviour
+public class AdManager : MonoBehaviour, IUnityAdsInitializationListener, IUnityAdsLoadListener, IUnityAdsShowListener
 {
+    // --- Singleton ----------------------------------------------------------------
     public static AdManager Instance { get; private set; }
 
-    [Header("Ad Unit IDs (replace for production)")]
-    public string appId; // Test App ID
-    public string bannerAdUnitId; // Test Banner
-    public string interstitialAdUnitId; // Test Interstitial
-    public string rewardedAdUnitId; // Test Rewarded
-    public string rewardedInterstitialAdUnitId; // Optional
+    // --- Game IDs -----------------------------------------------------------------
+    [Header("Game IDs")]
+    [SerializeField] private string androidGameId = "YOUR_ANDROID_GAME_ID";
+    [SerializeField] private string iOSGameId = "YOUR_IOS_GAME_ID";
+    [SerializeField] private bool testMode = true;
+    private string gameId;
 
-    // Internal ad references
-    private BannerView bannerView;
-    private InterstitialAd interstitialAd;
-    private RewardedAd rewardedAd;
-    private RewardedInterstitialAd rewardedInterstitialAd;
+    // --- Banner -------------------------------------------------------------------
+    [Header("Banner")]
+    [SerializeField] private BannerPosition bannerPosition = BannerPosition.BOTTOM_CENTER;
+    [SerializeField] private string bannerAndroidAdUnitId = "Banner_Android";
+    [SerializeField] private string bannerIOSAdUnitId = "Banner_iOS";
+    private string bannerAdUnitId;
+    private bool bannerLoaded = false;
 
-    // Events
-    public event Action OnInterstitialLoaded;
-    public event Action OnInterstitialFailedToLoad;
-    public event Action OnInterstitialClosed;
+    // --- Interstitial -------------------------------------------------------------
+    [Header("Interstitial")]
+    [SerializeField] private string interstitialAndroidAdUnitId = "Interstitial_Android";
+    [SerializeField] private string interstitialIOSAdUnitId = "Interstitial_iOS";
+    private string interstitialAdUnitId;
+    private bool interstitialLoaded = false;
 
-    public event Action OnRewardedLoaded;
-    public event Action OnRewardedFailedToLoad;
-    public event Action<Reward> OnUserEarnedReward;
+    // --- Rewarded -----------------------------------------------------------------
+    [Header("Rewarded")]
+    [SerializeField] private string rewardedAndroidAdUnitId = "Rewarded_Android";
+    [SerializeField] private string rewardedIOSAdUnitId = "Rewarded_iOS";
+    private string rewardedAdUnitId;
+    private bool rewardedLoaded = false;
 
-    public bool AutoReloadOnFail = true;
+    // Used to remember which adUnitId is showing (so we can route callbacks)
+    private string lastShowingAdUnitId = null;
+
+    // ------------------------------------------------------------------------------
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
+        // Singleton pattern
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        // Choose platform-specific IDs
+#if UNITY_IOS
+        gameId = iOSGameId;
+        bannerAdUnitId = bannerIOSAdUnitId;
+        interstitialAdUnitId = interstitialIOSAdUnitId;
+        rewardedAdUnitId = rewardedIOSAdUnitId;
+#elif UNITY_ANDROID
+        gameId = androidGameId;
+        bannerAdUnitId = bannerAndroidAdUnitId;
+        interstitialAdUnitId = interstitialAndroidAdUnitId;
+        rewardedAdUnitId = rewardedAndroidAdUnitId;
+#else
+        // Editor or unsupported platforms
+        gameId = androidGameId; // allow testing in editor
+        bannerAdUnitId = bannerAndroidAdUnitId;
+        interstitialAdUnitId = interstitialAndroidAdUnitId;
+        rewardedAdUnitId = rewardedAndroidAdUnitId;
+#endif
+
+        InitializeAds();
     }
 
-    private void Start()
+    #region Initialization
+    public void InitializeAds()
     {
-        // Initialize the Mobile Ads SDK. If you manage consent via UMP, do it BEFORE calling Initialize.
-        MobileAds.Initialize(initStatus =>
+        if (!Advertisement.isInitialized && Advertisement.isSupported)
         {
-            Debug.Log("Mobile Ads Initialized.");
-
-            // Newer SDK versions run callbacks on Unity main thread, so it's safe to call Unity APIs directly here.
-            // Preload the ads we want ready at startup.
-            LoadBanner();
-            LoadInterstitial();
-            LoadRewarded();
-            LoadRewardedInterstitial();
-        });
+            Debug.Log($"AdManager: Initializing Unity Ads (gameId: {gameId}, testMode: {testMode})");
+            Advertisement.Initialize(gameId, testMode, this);
+        }
+        else
+        {
+            Debug.Log("AdManager: Advertisement already initialized or not supported.");
+            // If already initialized, proactively load ads
+            if (Advertisement.isInitialized)
+            {
+                OnInitializationComplete();
+            }
+        }
     }
 
-    #region BANNER
-
-    public void LoadBanner(AdPosition position = AdPosition.Top)
+    public void OnInitializationComplete()
     {
-        if (bannerView != null)
+        Debug.Log("AdManager: Unity Ads Initialization Complete.");
+        // Set banner position
+        Advertisement.Banner.SetPosition(bannerPosition);
+
+        // Load all ad types
+        LoadBanner();
+        LoadInterstitial();
+        LoadRewarded();
+    }
+
+    public void OnInitializationFailed(UnityAdsInitializationError error, string message)
+    {
+        Debug.LogError($"AdManager: Unity Ads Initialization Failed: {error} - {message}");
+    }
+    #endregion
+
+    #region Banner
+    public void LoadBanner()
+    {
+        if (string.IsNullOrEmpty(bannerAdUnitId))
         {
-            bannerView.Destroy();
-            bannerView = null;
+            Debug.LogWarning("AdManager: Banner Ad Unit Id is null/empty for this platform.");
+            return;
         }
 
-        bannerView = new BannerView(bannerAdUnitId, AdSize.Banner, position);
-        AdRequest request = new AdRequest();
-        bannerView.LoadAd(request);
+        Debug.Log("AdManager: Loading banner: " + bannerAdUnitId);
 
-        // Some SDK versions expose banner load events; if your SDK doesn't have them, remove or replace these with the appropriate event names from your version of the Google Mobile Ads SDK.
-        // Example (if available):
-        // bannerView.OnAdLoaded += () => { Debug.Log("Banner loaded."); };
-        // bannerView.OnAdFailedToLoad += (LoadAdError err) => { Debug.LogError("Banner failed to load: " + err); };
+        BannerLoadOptions options = new BannerLoadOptions
+        {
+            loadCallback = OnBannerLoaded,
+            errorCallback = OnBannerError
+        };
 
+        Advertisement.Banner.Load(bannerAdUnitId, options);
     }
 
     public void ShowBanner()
     {
-        if (bannerView == null)
+        if (bannerLoaded)
         {
-            LoadBanner();
-            return;
-        }
+            BannerOptions options = new BannerOptions
+            {
+                clickCallback = OnBannerClicked,
+                hideCallback = OnBannerHidden,
+                showCallback = OnBannerShown
+            };
 
-        bannerView.Show();
+            Advertisement.Banner.Show(bannerAdUnitId, options);
+        }
+        else
+        {
+            Debug.Log("AdManager: Banner not loaded yet; loading now.");
+            LoadBanner();
+        }
     }
 
     public void HideBanner()
     {
-        bannerView?.Hide();
+        Advertisement.Banner.Hide();
+        bannerLoaded = false;
     }
 
-    public void DestroyBanner()
+    private void OnBannerLoaded()
     {
-        bannerView?.Destroy();
-        bannerView = null;
+        Debug.Log("AdManager: Banner loaded.");
+        bannerLoaded = true;
     }
 
+    private void OnBannerError(string message)
+    {
+        Debug.LogError($"AdManager: Banner Error: {message}");
+        bannerLoaded = false;
+    }
+
+    private void OnBannerClicked() { /* optional */ }
+    private void OnBannerShown() { /* optional */ }
+    private void OnBannerHidden() { /* optional */ }
     #endregion
 
-    #region INTERSTITIAL
-
+    #region Interstitial
     public void LoadInterstitial()
     {
-        AdRequest request = new AdRequest();
-
-        InterstitialAd.Load(interstitialAdUnitId, request, (InterstitialAd ad, LoadAdError error) =>
+        if (string.IsNullOrEmpty(interstitialAdUnitId))
         {
-            if (error != null || ad == null)
-            {
-                Debug.LogError("Interstitial failed to load: " + error);
-                OnInterstitialFailedToLoad?.Invoke();
-                if (AutoReloadOnFail)
-                {
-                    Invoke(nameof(LoadInterstitial), 5f);
-                }
-                return;
-            }
+            Debug.LogWarning("AdManager: Interstitial Ad Unit Id is null/empty for this platform.");
+            return;
+        }
 
-            Debug.Log("Interstitial loaded.");
-            interstitialAd = ad;
-            RegisterInterstitialEvents(interstitialAd);
-            OnInterstitialLoaded?.Invoke();
-        });
-    }
-
-    private void RegisterInterstitialEvents(InterstitialAd ad)
-    {
-        ad.OnAdFullScreenContentClosed += () =>
-        {
-            Debug.Log("Interstitial closed.");
-            OnInterstitialClosed?.Invoke();
-            // reload after close
-            LoadInterstitial();
-        };
-
-        ad.OnAdFullScreenContentFailed += (AdError err) =>
-        {
-            Debug.LogError("Interstitial show failed: " + err);
-        };
-
-        ad.OnAdFullScreenContentOpened += () =>
-        {
-            Debug.Log("Interstitial opened.");
-        };
+        Debug.Log("AdManager: Loading interstitial: " + interstitialAdUnitId);
+        Advertisement.Load(interstitialAdUnitId, this);
     }
 
     public void ShowInterstitial()
     {
-        if (interstitialAd != null && interstitialAd.CanShowAd())
+        if (interstitialLoaded)
         {
-            interstitialAd.Show();
+            lastShowingAdUnitId = interstitialAdUnitId;
+            Advertisement.Show(interstitialAdUnitId, this);
         }
         else
         {
-            Debug.Log("Interstitial not ready, loading now.");
+            Debug.Log("AdManager: Interstitial not loaded. Loading now.");
             LoadInterstitial();
         }
     }
-
     #endregion
 
-    #region REWARDED
-
+    #region Rewarded
     public void LoadRewarded()
     {
-        AdRequest request = new AdRequest();
-
-        RewardedAd.Load(rewardedAdUnitId, request, (RewardedAd ad, LoadAdError error) =>
+        if (string.IsNullOrEmpty(rewardedAdUnitId))
         {
-            if (error != null || ad == null)
-            {
-                Debug.LogError("Rewarded failed to load: " + error);
-                OnRewardedFailedToLoad?.Invoke();
-                if (AutoReloadOnFail)
-                {
-                    Invoke(nameof(LoadRewarded), 5f);
-                }
-                return;
-            }
+            Debug.LogWarning("AdManager: Rewarded Ad Unit Id is null/empty for this platform.");
+            return;
+        }
 
-            Debug.Log("Rewarded loaded.");
-            rewardedAd = ad;
-            RegisterRewardedEvents(rewardedAd);
-            OnRewardedLoaded?.Invoke();
-        });
-    }
-
-    private void RegisterRewardedEvents(RewardedAd ad)
-    {
-        // Some SDK versions expose an OnUserEarnedReward event on RewardedAd, others do not.
-        // To be compatible across SDKs we avoid subscribing to a non-existent event here.
-        // Keep full-screen content callbacks for lifecycle handling.
-
-        ad.OnAdFullScreenContentClosed += () =>
-        {
-            Debug.Log("Rewarded ad closed. Reloading...");
-            LoadRewarded();
-        };
-
-        ad.OnAdFullScreenContentFailed += (AdError err) =>
-        {
-            Debug.LogError("Rewarded failed to show: " + err);
-        };
+        Debug.Log("AdManager: Loading rewarded ad: " + rewardedAdUnitId);
+        Advertisement.Load(rewardedAdUnitId, this);
     }
 
     public void ShowRewarded()
     {
-        if (rewardedAd != null && rewardedAd.CanShowAd())
+        if (rewardedLoaded)
         {
-            // Call the SDK's Show overload that provides the earned reward via callback.
-            rewardedAd.Show((Reward reward) =>
-            {
-                Debug.Log($"User earned reward: {reward.Type} amount: {reward.Amount}");
-                OnUserEarnedReward?.Invoke(reward);
-            });
+            lastShowingAdUnitId = rewardedAdUnitId;
+            Advertisement.Show(rewardedAdUnitId, this);
         }
         else
         {
-            Debug.Log("Rewarded ad not ready. Loading...");
+            Debug.Log("AdManager: Rewarded ad not loaded. Loading now.");
             LoadRewarded();
         }
     }
-
     #endregion
 
-    #region REWARDED INTERSTITIAL (optional)
-
-    public void LoadRewardedInterstitial()
+    #region IUnityAdsLoadListener
+    // Called when an ad successfully loads.
+    public void OnUnityAdsAdLoaded(string adUnitId)
     {
-        if (string.IsNullOrEmpty(rewardedInterstitialAdUnitId))
+        Debug.Log("AdManager: OnUnityAdsAdLoaded: " + adUnitId);
+
+        if (adUnitId.Equals(interstitialAdUnitId))
         {
-            return; // not configured
+            interstitialLoaded = true;
+        }
+        else if (adUnitId.Equals(rewardedAdUnitId))
+        {
+            rewardedLoaded = true;
+        }
+        else if (adUnitId.Equals(bannerAdUnitId))
+        {
+            bannerLoaded = true;
+        }
+    }
+
+    public void OnUnityAdsFailedToLoad(string adUnitId, UnityAdsLoadError error, string message)
+    {
+        Debug.LogError($"AdManager: Error loading Ad Unit {adUnitId}: {error} - {message}");
+
+        if (adUnitId.Equals(interstitialAdUnitId))
+        {
+            interstitialLoaded = false;
+        }
+        else if (adUnitId.Equals(rewardedAdUnitId))
+        {
+            rewardedLoaded = false;
+        }
+        else if (adUnitId.Equals(bannerAdUnitId))
+        {
+            bannerLoaded = false;
         }
 
-        AdRequest request = new AdRequest();
-        RewardedInterstitialAd.Load(rewardedInterstitialAdUnitId, request, (RewardedInterstitialAd ad, LoadAdError error) =>
+        // Optionally implement retry/backoff logic here.
+    }
+    #endregion
+
+    #region IUnityAdsShowListener
+    public void OnUnityAdsShowFailure(string adUnitId, UnityAdsShowError error, string message)
+    {
+        Debug.LogError($"AdManager: Error showing Ad Unit {adUnitId}: {error} - {message}");
+
+        // mark as not loaded so we can attempt reload
+        if (adUnitId.Equals(interstitialAdUnitId))
+            interstitialLoaded = false;
+        else if (adUnitId.Equals(rewardedAdUnitId))
+            rewardedLoaded = false;
+    }
+
+    public void OnUnityAdsShowStart(string adUnitId)
+    {
+        Debug.Log("AdManager: OnUnityAdsShowStart: " + adUnitId);
+    }
+
+    public void OnUnityAdsShowClick(string adUnitId)
+    {
+        Debug.Log("AdManager: OnUnityAdsShowClick: " + adUnitId);
+    }
+
+    public void OnUnityAdsShowComplete(string adUnitId, UnityAdsShowCompletionState showCompletionState)
+    {
+        Debug.Log($"AdManager: OnUnityAdsShowComplete: {adUnitId} - {showCompletionState}");
+
+        if (adUnitId.Equals(interstitialAdUnitId))
         {
-            if (error != null || ad == null)
+            // Interstitial finished - reload for next time
+            interstitialLoaded = false;
+            LoadInterstitial();
+        }
+        else if (adUnitId.Equals(rewardedAdUnitId))
+        {
+            // Rewarded finished: if COMPLETED -> grant reward, then reload
+            rewardedLoaded = false;
+            if (showCompletionState == UnityAdsShowCompletionState.COMPLETED)
             {
-                Debug.LogError("RewardedInterstitial failed to load: " + error);
-                if (AutoReloadOnFail)
-                {
-                    Invoke(nameof(LoadRewardedInterstitial), 10f);
-                }
-                return;
+                Debug.Log("AdManager: Rewarded ad completed - grant reward here.");
+                GrantReward();
             }
-
-            Debug.Log("RewardedInterstitial loaded.");
-            rewardedInterstitialAd = ad;
-
-            rewardedInterstitialAd.OnAdFullScreenContentClosed += () => { Debug.Log("RewardedInterstitial closed"); LoadRewardedInterstitial(); };
-        });
-    }
-
-    public void ShowRewardedInterstitial()
-    {
-        if (rewardedInterstitialAd != null && rewardedInterstitialAd.CanShowAd())
-        {
-            rewardedInterstitialAd.Show((reward) =>
-            {
-                Debug.Log($"RewardedInterstitial reward: {reward.Type} {reward.Amount}");
-                OnUserEarnedReward?.Invoke(reward);
-            });
+            LoadRewarded();
         }
-        else
-        {
-            Debug.Log("RewardedInterstitial not ready. Loading...");
-            LoadRewardedInterstitial();
-        }
-    }
 
+        // reset last showing id
+        lastShowingAdUnitId = null;
+    }
     #endregion
+
+    #region Reward handling (example)
+    private void GrantReward()
+    {
+        // TODO: Implement the actual reward logic for your game, e.g. give coins/lives.
+        Debug.Log("AdManager: Granting reward to user (placeholder).");
+    }
+    #endregion
+
+    // Optional helper methods for external scripts ------------------------------------------------
+    // Example: external script calls AdManager.Instance.ShowInterstitial();
+    // or AdManager.Instance.ShowRewarded();
 
     private void OnDestroy()
     {
-        DestroyBanner();
-        interstitialAd = null;
-        rewardedAd = null;
-        rewardedInterstitialAd = null;
+        // clean up singleton reference (if this instance was destroyed)
+        if (Instance == this)
+            Instance = null;
     }
 }
