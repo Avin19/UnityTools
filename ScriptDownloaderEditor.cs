@@ -60,7 +60,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
     private const string GoogleMobileAdsFileName = "GoogleMobileAds-v10.6.0.unitypackage";
 
     // AdManager raw file URL for the exact commit the user provided
-    private const string AdManagerRawUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/6f925b8bad0e80425a9efd64a695a1057ca01bdc/Ads/AdManager.cs";
+    private const string AdManagerRawUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/AdManager.cs";
 
     [MenuItem("Tools/Setup/Script Downloader")]
     public static void ShowWindow()
