@@ -285,7 +285,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
     // ---------- NEW: Download AdManager.cs from a specific commit ----------
     private static async Task DownloadAdManagerScript()
     {
-        string scriptsFolder = Path.Combine(Application.dataPath, "Scripts");
+        string scriptsFolder = Path.Combine(Application.dataPath, "Project/Script/Ads");
         string savePath = Path.Combine(scriptsFolder, "AdManager.cs");
 
         try
