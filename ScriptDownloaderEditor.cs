@@ -39,7 +39,8 @@ Provide a brief explanation of the game mechanics.
 
 ## PlantUML Diagrams
 ### Class Diagram
-![Class Diagram](include.png)
+![Class Diagram](out/PlantUml/include/include.svg)
+![Class Diagram](out/PlantUml/include/include.png)
 
 ## Screenshots
 <!-- ![Screenshot 2](screenshots/screenshot2.png) -->
