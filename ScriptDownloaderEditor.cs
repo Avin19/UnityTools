@@ -61,7 +61,9 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
     private const string GoogleMobileAdsFileName = "GoogleMobileAds-v10.6.0.unitypackage";
 
     // AdManager raw file URL for the exact commit the user provided
-    private const string AdManagerRawUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/AdManager.cs";
+    private const string AdMobManagerRawUrl = "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/AdMobManager.cs";
+    private const string GdprURl = "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/GdprConsentManager.cs";
+    private const string AdConfigURl = "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/AdConfig.cs";
 
     [MenuItem("Tools/Setup/Script Downloader")]
     public static void ShowWindow()
@@ -287,7 +289,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
     private static async Task DownloadAdManagerScript()
     {
         string scriptsFolder = Path.Combine(Application.dataPath, "Project/Script/Ads");
-        string savePath = Path.Combine(scriptsFolder, "AdManager.cs");
+        string savePath = Path.Combine(scriptsFolder, "AdMobManager.cs");
 
         try
         {
@@ -316,6 +318,10 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
 
             EditorUtility.DisplayProgressBar("Downloading AdManager.cs", "Downloading script...", 0.05f);
             await DownloadFileAsync(AdManagerRawUrl, savePath);
+            string savePath = Path.Combine(scriptsFolder, "GdprConsentManager.cs");
+            await DownloadFileAsync(GdprURl, savePath);
+            string savePath = Path.Combine(scriptsFolder, "AdConfig.cs");
+            await DownloadFileAsync(AdConfigURl, savePath);
             EditorUtility.ClearProgressBar();
 
             // Import & refresh on main thread
@@ -338,6 +344,7 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             EditorUtility.DisplayDialog("Download Failed", "Error downloading AdManager.cs. See console for details.", "OK");
         }
     }
+
 
     // Generic async file downloader used by multiple methods above
     private static async Task DownloadFileAsync(string url, string filePath)
