@@ -317,10 +317,10 @@ Prepare for liftoff and enjoy your journey to the International Space Station! ð
             }
 
             EditorUtility.DisplayProgressBar("Downloading AdManager.cs", "Downloading script...", 0.05f);
-            await DownloadFileAsync(AdManagerRawUrl, savePath);
-            string savePath = Path.Combine(scriptsFolder, "GdprConsentManager.cs");
+            await DownloadFileAsync(AdMobManagerRawUrl, savePath);
+            savePath = Path.Combine(scriptsFolder, "GdprConsentManager.cs");
             await DownloadFileAsync(GdprURl, savePath);
-            string savePath = Path.Combine(scriptsFolder, "AdConfig.cs");
+            savePath = Path.Combine(scriptsFolder, "AdConfig.cs");
             await DownloadFileAsync(AdConfigURl, savePath);
             EditorUtility.ClearProgressBar();
 
