@@ -32,6 +32,7 @@ public class ScriptDownloaderEditor : EditorWindow
     private bool createModels = true;
     private bool createTextures = true;
     private bool createEditor = true;
+    private bool createScene = true;
     private bool downloadGitIgnore = true;
 
     private string readmeContent =
@@ -142,6 +143,7 @@ List third-party assets, audio, fonts, code packages, and people here.
         createModels = EditorGUILayout.Toggle("Models", createModels);
         createTextures = EditorGUILayout.Toggle("Textures", createTextures);
         createEditor = EditorGUILayout.Toggle("Editor", createEditor);
+        createScene = EditorGUILayout.Toggle("Scene", createScene);
 
         if (GUILayout.Button("Create Folders"))
         {
@@ -190,6 +192,16 @@ List third-party assets, audio, fonts, code packages, and people here.
         }
 
         GUILayout.Space(6);
+        GUILayout.Label("Scene folder (repo)", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Downloads files from the remote `Scene/` folder into Assets/Project/Scene. Use Create Folders (Scene) first, or this button will create the folder.",
+            MessageType.Info);
+        if (GUILayout.Button("Download Scene folder from repo"))
+        {
+            _ = DownloadSceneFolderFromRepoAsync();
+        }
+
+        GUILayout.Space(6);
         GUILayout.Label("Download .gitignore", EditorStyles.boldLabel);
         downloadGitIgnore = EditorGUILayout.Toggle("Download .gitignore when clicking button", downloadGitIgnore);
 
@@ -227,7 +239,8 @@ List third-party assets, audio, fonts, code packages, and people here.
             createPrefabs ? "Prefabs" : null,
             createModels ? "Models" : null,
             createTextures ? "Textures" : null,
-            createEditor ? "Editor" : null
+            createEditor ? "Editor" : null,
+            createScene ? "Scene" : null
         };
 
         foreach (string folder in folders)
@@ -340,6 +353,59 @@ List third-party assets, audio, fonts, code packages, and people here.
             Debug.LogError($"Script download finished with {failures} failure(s). Check the Console for details.");
 
         EditorApplication.delayCall += AssetDatabase.Refresh;
+    }
+
+    /// <summary>
+    /// Files under <c>Scene/</c> on the UnityTools repo. Add entries here when new scene assets are published.
+    /// </summary>
+    private static readonly string[] SceneRepoRelativePaths =
+    {
+        "Scene/BootStrap.unity",
+        "Scene/BootstrapLoadingUI.cs"
+    };
+
+    public static async Task DownloadSceneFolderFromRepoAsync()
+    {
+        string sceneRoot = Path.Combine(Application.dataPath, "Project", "Scene");
+        if (!Directory.Exists(sceneRoot))
+            Directory.CreateDirectory(sceneRoot);
+
+        int failures = 0;
+        try
+        {
+            for (int i = 0; i < SceneRepoRelativePaths.Length; i++)
+            {
+                string relative = SceneRepoRelativePaths[i];
+                string fileName = Path.GetFileName(relative);
+                string url = GitHubToolsRawBase + relative.Replace('\\', '/');
+                string fullPath = Path.Combine(sceneRoot, fileName);
+
+                float p = 0.05f + 0.9f * ((i + 1) / (float)SceneRepoRelativePaths.Length);
+                EditorUtility.DisplayProgressBar("Downloading Scene folder", fileName, p);
+
+                bool ok = await DownloadFileAsync(url, fullPath);
+                if (!ok)
+                    failures++;
+            }
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
+        }
+
+        if (failures == 0)
+            Debug.Log($"Scene folder downloaded to: {sceneRoot}");
+        else
+            Debug.LogError($"Scene download finished with {failures} failure(s). Check the Console.");
+
+        EditorApplication.delayCall += () =>
+        {
+            AssetDatabase.Refresh();
+            const string sceneAssetPath = "Assets/Project/Scene/BootStrap.unity";
+            Object sceneAsset = AssetDatabase.LoadMainAssetAtPath(sceneAssetPath);
+            if (sceneAsset != null)
+                EditorGUIUtility.PingObject(sceneAsset);
+        };
     }
 
     public static async Task GettingGitIgnore()
