@@ -13,6 +13,9 @@ public class ScriptDownloaderEditor : EditorWindow
 {
     private const string GitHubToolsRawBase = "https://raw.githubusercontent.com/Avin19/UnityTools/main/";
 
+    /// <summary>Alternate raw base (some environments resolve the same branch more reliably).</summary>
+    private const string GitHubToolsRawBaseRefs = "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/";
+
     /// <summary>Direct raw URL for the UI .unitypackage (single source of truth).</summary>
     private static readonly string UnityPackageRawUrl = $"{GitHubToolsRawBase}UIPackage.unitypackage";
 
@@ -178,7 +181,8 @@ List third-party assets, audio, fonts, code packages, and people here.
         GUILayout.Space(6);
         GUILayout.Label("Player data scripts", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Downloads `PlayerData.cs` and `PlayerDataManager.cs` from the repo into Assets/Project/Script/playerData/",
+            "Downloads PlayerData scripts from GitHub into Assets/Project/Script/playerData/. " +
+            "The repo folder is PlayerData/ (case-sensitive on raw). Push that folder to main if you see 404.",
             MessageType.Info);
         if (GUILayout.Button("Download PlayerData scripts"))
         {
@@ -418,12 +422,23 @@ List third-party assets, audio, fonts, code packages, and people here.
         };
     }
 
-    /// <summary>Files under <c>playerData/</c> on the UnityTools repo (see <c>GitHubToolsRawBase</c>).</summary>
-    private static readonly string[] PlayerDataRepoRelativePaths =
+    private static readonly string[] PlayerDataFileNames =
     {
-        "playerData/PlayerData.cs",
-        "playerData/PlayerDataManager.cs"
+        "PlayerData.cs",
+        "PlayerDataManager.cs"
     };
+
+    /// <summary>Raw URLs are case-sensitive; git tracks <c>PlayerData/</c> on this repo.</summary>
+    private static string[] BuildPlayerDataSourceUrls(string fileName)
+    {
+        return new[]
+        {
+            $"{GitHubToolsRawBase}PlayerData/{fileName}",
+            $"{GitHubToolsRawBase}playerData/{fileName}",
+            $"{GitHubToolsRawBaseRefs}PlayerData/{fileName}",
+            $"{GitHubToolsRawBaseRefs}playerData/{fileName}"
+        };
+    }
 
     public static async Task DownloadPlayerDataFromRepoAsync()
     {
@@ -434,11 +449,9 @@ List third-party assets, audio, fonts, code packages, and people here.
         int failures = 0;
         try
         {
-            for (int i = 0; i < PlayerDataRepoRelativePaths.Length; i++)
+            for (int i = 0; i < PlayerDataFileNames.Length; i++)
             {
-                string relative = PlayerDataRepoRelativePaths[i];
-                string fileName = Path.GetFileName(relative);
-                string url = GitHubToolsRawBase + relative.Replace('\\', '/');
+                string fileName = PlayerDataFileNames[i];
                 string fullPath = Path.Combine(destRoot, fileName);
 
                 if (File.Exists(fullPath))
@@ -455,10 +468,10 @@ List third-party assets, audio, fonts, code packages, and people here.
                     }
                 }
 
-                float p = 0.05f + 0.9f * ((i + 1) / (float)PlayerDataRepoRelativePaths.Length);
+                float p = 0.05f + 0.9f * ((i + 1) / (float)PlayerDataFileNames.Length);
                 EditorUtility.DisplayProgressBar("Downloading PlayerData", fileName, p);
 
-                bool ok = await DownloadFileAsync(url, fullPath);
+                bool ok = await DownloadFirstMatchingUrlAsync(BuildPlayerDataSourceUrls(fileName), fullPath);
                 if (!ok)
                     failures++;
             }
@@ -471,7 +484,9 @@ List third-party assets, audio, fonts, code packages, and people here.
         if (failures == 0)
             Debug.Log($"PlayerData scripts downloaded to: {destRoot}");
         else
-            Debug.LogError($"PlayerData download finished with {failures} failure(s). Check the Console.");
+            Debug.LogError(
+                $"PlayerData download finished with {failures} failure(s). " +
+                "Confirm the PlayerData/ folder exists on branch main and is pushed to Avin19/UnityTools (raw URLs are case-sensitive).");
 
         EditorApplication.delayCall += () =>
         {
@@ -568,7 +583,7 @@ List third-party assets, audio, fonts, code packages, and people here.
     }
 
     /// <returns>true if the file was written successfully.</returns>
-    private static async Task<bool> DownloadFileAsync(string url, string filePath)
+    private static async Task<bool> DownloadFileAsync(string url, string filePath, bool logFailure = true)
     {
         using (HttpClient client = new HttpClient())
         {
@@ -589,10 +604,29 @@ List third-party assets, audio, fonts, code packages, and people here.
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"An error occurred while downloading {url}: {ex.Message}");
+                if (logFailure)
+                    Debug.LogError($"An error occurred while downloading {url}: {ex.Message}");
                 return false;
             }
         }
+    }
+
+    /// <summary>Tries each URL until one succeeds; logs a single error listing all URLs if every attempt fails.</summary>
+    private static async Task<bool> DownloadFirstMatchingUrlAsync(string[] urls, string filePath)
+    {
+        for (int i = 0; i < urls.Length; i++)
+        {
+            bool ok = await DownloadFileAsync(urls[i], filePath, logFailure: false);
+            if (ok)
+            {
+                if (i > 0)
+                    Debug.Log($"Download succeeded using fallback URL: {urls[i]}");
+                return true;
+            }
+        }
+
+        Debug.LogError("All download attempts failed for:\n" + string.Join("\n", urls));
+        return false;
     }
 
     public static async Task AddRemoveNecessaryPackages()
