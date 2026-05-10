@@ -211,9 +211,9 @@ public class PlayerDataManager : MonoBehaviour
         string[] adjectives = { "Silent", "Dark", "Shadow", "Swift", "Deadly", "Ghost", "Hidden", "Night" };
         string[] nouns = { "Hunter", "Assassin", "Ninja", "Sniper", "Blade", "Reaper", "Stalker", "Phantom" };
 
-        string adj = adjectives[Random.Range(0, adjectives.Length)];
-        string noun = nouns[Random.Range(0, nouns.Length)];
-        int number = Random.Range(10, 999);
+        string adj = adjectives[UnityEngine.Random.Range(0, adjectives.Length)];
+        string noun = nouns[UnityEngine.Random.Range(0, nouns.Length)];
+        int number = UnityEngine.Random.Range(10, 999);
 
         return adj + noun + number;
     }
