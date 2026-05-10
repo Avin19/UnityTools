@@ -1,3 +1,6 @@
+// ScriptDownloaderEditor.cs
+// Place this file inside an Editor folder: Assets/Editor/ScriptDownloaderEditor.cs
+
 using UnityEditor;
 using UnityEngine;
 using System.IO;
@@ -15,10 +18,11 @@ public class ScriptDownloaderEditor : EditorWindow
 
     private const string UnityPackageFileName = "UIPackage.unitypackage";
 
-    private const string GoogleMobileAdsPackageFileName = "GoogleMobileAds-v10.6.0.unitypackage";
+    /// <summary>Official Google Mobile Ads Unity plugin release (binary).</summary>
+    private const string GoogleMobileAdsUnityPackageUrl =
+        "https://github.com/googleads/googleads-mobile-unity/releases/download/v10.6.0/GoogleMobileAds-v10.6.0.unitypackage";
 
-    /// <summary>Direct raw URL for the Google Mobile Ads .unitypackage (same repo as other tool assets).</summary>
-    private static readonly string GoogleMobileAdsPackageRawUrl = $"{GitHubToolsRawBase}{GoogleMobileAdsPackageFileName}";
+    private const string GoogleMobileAdsUnityPackageFileName = "GoogleMobileAds-v10.6.0.unitypackage";
 
     private bool createScripts = true;
     private bool createSprite = true;
@@ -82,6 +86,13 @@ puml-gen Scripts PlantUml -dir --ignore Private,Protected -createAssociation -al
 
 More context: [PlantUmlClassDiagramGenerator](https://github.com/pierre3/PlantUmlClassDiagramGenerator).
 
+### Checked-in diagram output (optional)
+
+If you commit generated diagrams:
+
+![Class Diagram](out/PlantUml/include/include.svg)
+![Class Diagram](out/PlantUml/include/include.png)
+
 ## Screenshots
 
 Add images under something like `Docs/Screenshots/` and reference them here.
@@ -100,6 +111,13 @@ State your license here (for example MIT, or proprietary / all rights reserved).
 
 List third-party assets, audio, fonts, code packages, and people here.
 ";
+
+    private const string AdMobManagerRawUrl =
+        "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/AdMobManager.cs";
+    private const string GdprConsentRawUrl =
+        "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/GdprConsentManager.cs";
+    private const string AdConfigRawUrl =
+        "https://raw.githubusercontent.com/Avin19/UnityTools/refs/heads/main/Ads/AdConfig.cs";
 
     [MenuItem("Tools/Setup/Script Downloader")]
     public static void ShowWindow()
@@ -129,6 +147,8 @@ List third-party assets, audio, fonts, code packages, and people here.
         {
             CreateSelectedFolders();
         }
+
+        GUILayout.Space(8);
         GUILayout.Label("UI Package Management", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox($"UI package URL:\n{UnityPackageRawUrl}", MessageType.Info);
         if (GUILayout.Button("Download & Install UnityPackage"))
@@ -136,14 +156,24 @@ List third-party assets, audio, fonts, code packages, and people here.
             _ = DownloadAndInstallUnityPackageAsync(UnityPackageRawUrl, UnityPackageFileName);
         }
 
+        GUILayout.Space(6);
         GUILayout.Label("Google Mobile Ads", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            $"Google Mobile Ads v10.6.0 (.unitypackage)\n{GoogleMobileAdsPackageRawUrl}\n\nHost this file on the same branch as other tool downloads, or download fails until it is published.",
+            $"Official release (.unitypackage):\n{GoogleMobileAdsUnityPackageUrl}",
             MessageType.Info);
         if (GUILayout.Button("Download & Install Google Mobile Ads (v10.6.0)"))
         {
-            _ = DownloadAndInstallUnityPackageAsync(GoogleMobileAdsPackageRawUrl, GoogleMobileAdsPackageFileName);
+            _ = DownloadAndInstallUnityPackageAsync(GoogleMobileAdsUnityPackageUrl, GoogleMobileAdsUnityPackageFileName);
         }
+
+        GUILayout.Space(6);
+        GUILayout.Label("Ad scripts", EditorStyles.boldLabel);
+        if (GUILayout.Button("Download AdMob scripts from GitHub (Ads folder)"))
+        {
+            _ = DownloadAdMobScriptsAsync();
+        }
+
+        GUILayout.Space(6);
         GUILayout.Label("README Setup", EditorStyles.boldLabel);
         readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
 
@@ -152,12 +182,14 @@ List third-party assets, audio, fonts, code packages, and people here.
             CreateReadmeFile();
         }
 
+        GUILayout.Space(6);
         GUILayout.Label("Download Scripts", EditorStyles.boldLabel);
-        if (GUILayout.Button("Download Scripts"))
+        if (GUILayout.Button("Download Template Scripts"))
         {
             _ = GettingTemplateScripts();
         }
 
+        GUILayout.Space(6);
         GUILayout.Label("Download .gitignore", EditorStyles.boldLabel);
         downloadGitIgnore = EditorGUILayout.Toggle("Download .gitignore when clicking button", downloadGitIgnore);
 
@@ -169,11 +201,14 @@ List third-party assets, audio, fonts, code packages, and people here.
             }
         }
 
+        GUILayout.Space(6);
         GUILayout.Label("Package Management", EditorStyles.boldLabel);
         if (GUILayout.Button("Add/Remove Necessary Packages"))
         {
             _ = AddRemoveNecessaryPackages();
         }
+
+        GUILayout.Space(6);
         GUILayout.Label("PlantUML diagram generator", EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "External tool (example): puml-gen Scripts PlantUml -dir --ignore Private,Protected -createAssociation -allInOne",
@@ -219,9 +254,17 @@ List third-party assets, audio, fonts, code packages, and people here.
     private static async Task DownloadAndInstallUnityPackageAsync(string rawUrl, string fileName)
     {
         string packagePath = Path.GetFullPath(Path.Combine(GetProjectRoot(), fileName));
-        bool ok = await DownloadFileAsync(rawUrl, packagePath);
-        if (ok)
-            InstallUnityPackage(packagePath);
+        try
+        {
+            EditorUtility.DisplayProgressBar("Downloading package", fileName, 0.1f);
+            bool ok = await DownloadFileAsync(rawUrl, packagePath);
+            if (ok)
+                InstallUnityPackage(packagePath);
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
+        }
     }
 
     private static void InstallUnityPackage(string filePath)
@@ -245,10 +288,13 @@ List third-party assets, audio, fonts, code packages, and people here.
         {
             File.WriteAllText(readmePath, readmeContent);
             Debug.Log($"README file created at: {readmePath}");
+            EditorUtility.DisplayDialog("README created", $"README.md written to:\n{readmePath}", "OK");
+            AssetDatabase.Refresh();
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"Error creating README file: {ex.Message}");
+            EditorUtility.DisplayDialog("Error", $"Could not create README:\n{ex.Message}", "OK");
         }
     }
 
@@ -266,31 +312,119 @@ List third-party assets, audio, fonts, code packages, and people here.
         };
 
         int failures = 0;
-        for (int i = 0; i < templates.Length; i++)
+        try
         {
-            string fullPath = Path.Combine(folderPath, "Project", "Editor", "Template", templates[i].fileName);
-            string dir = Path.GetDirectoryName(fullPath);
-            if (!string.IsNullOrEmpty(dir))
-                Directory.CreateDirectory(dir);
+            for (int i = 0; i < templates.Length; i++)
+            {
+                string fullPath = Path.Combine(folderPath, "Project", "Editor", "Template", templates[i].fileName);
+                string dir = Path.GetDirectoryName(fullPath);
+                if (!string.IsNullOrEmpty(dir))
+                    Directory.CreateDirectory(dir);
 
-            bool ok = await DownloadFileAsync(templates[i].url, fullPath);
-            if (!ok)
-                failures++;
+                float p = 0.05f + 0.9f * ((i + 1) / (float)templates.Length);
+                EditorUtility.DisplayProgressBar("Downloading templates", templates[i].fileName, p);
+
+                bool ok = await DownloadFileAsync(templates[i].url, fullPath);
+                if (!ok)
+                    failures++;
+            }
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
         }
 
         if (failures == 0)
             Debug.Log("All scripts downloaded successfully.");
         else
             Debug.LogError($"Script download finished with {failures} failure(s). Check the Console for details.");
+
+        EditorApplication.delayCall += AssetDatabase.Refresh;
     }
 
     public static async Task GettingGitIgnore()
     {
         string filePath = Path.Combine(GetProjectRoot(), ".gitignore");
         string fileUrl = $"{GitHubToolsRawBase}.gitignore";
-        bool ok = await DownloadFileAsync(fileUrl, filePath);
-        if (ok)
-            Debug.Log("Downloaded .gitignore file.");
+        try
+        {
+            EditorUtility.DisplayProgressBar("Downloading .gitignore", "Downloading...", 0.2f);
+            bool ok = await DownloadFileAsync(fileUrl, filePath);
+            if (ok)
+            {
+                Debug.Log("Downloaded .gitignore file.");
+                EditorApplication.delayCall += AssetDatabase.Refresh;
+            }
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
+        }
+    }
+
+    private static async Task DownloadAdMobScriptsAsync()
+    {
+        string scriptsFolder = Path.Combine(Application.dataPath, "Project", "Script", "Ads");
+        const string relativePingPath = "Assets/Project/Script/Ads/AdMobManager.cs";
+
+        (string url, string fileName)[] files =
+        {
+            (AdMobManagerRawUrl, "AdMobManager.cs"),
+            (GdprConsentRawUrl, "GdprConsentManager.cs"),
+            (AdConfigRawUrl, "AdConfig.cs")
+        };
+
+        try
+        {
+            if (!Directory.Exists(scriptsFolder))
+                Directory.CreateDirectory(scriptsFolder);
+
+            for (int i = 0; i < files.Length; i++)
+            {
+                string savePath = Path.Combine(scriptsFolder, files[i].fileName);
+                if (File.Exists(savePath))
+                {
+                    bool overwrite = EditorUtility.DisplayDialog(
+                        "Overwrite file?",
+                        $"Assets/Project/Script/Ads/{files[i].fileName} already exists. Overwrite?",
+                        "Overwrite",
+                        "Cancel");
+                    if (!overwrite)
+                    {
+                        Debug.Log("Download cancelled by user.");
+                        return;
+                    }
+                }
+
+                float p = 0.1f + 0.8f * ((i + 1) / (float)files.Length);
+                EditorUtility.DisplayProgressBar("Downloading AdMob scripts", files[i].fileName, p);
+                bool ok = await DownloadFileAsync(files[i].url, savePath);
+                if (!ok)
+                {
+                    EditorUtility.DisplayDialog("Download failed", $"Could not download {files[i].fileName}. See Console.", "OK");
+                    return;
+                }
+            }
+
+            EditorUtility.DisplayDialog("Download complete", $"Scripts saved under:\n{scriptsFolder}", "OK");
+
+            EditorApplication.delayCall += () =>
+            {
+                AssetDatabase.Refresh();
+                Object asset = AssetDatabase.LoadMainAssetAtPath(relativePingPath);
+                if (asset != null)
+                    EditorGUIUtility.PingObject(asset);
+            };
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError("Error downloading AdMob scripts: " + ex.Message);
+            EditorUtility.DisplayDialog("Download failed", "See Console for details.", "OK");
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
+        }
     }
 
     /// <returns>true if the file was written successfully.</returns>
@@ -304,6 +438,11 @@ List third-party assets, audio, fonts, code packages, and people here.
                 HttpResponseMessage response = await client.GetAsync(url);
                 response.EnsureSuccessStatusCode();
                 byte[] fileBytes = await response.Content.ReadAsByteArrayAsync();
+
+                string dir = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
                 await File.WriteAllBytesAsync(filePath, fileBytes);
                 Debug.Log($"Downloaded and saved file to {filePath}");
                 return true;
