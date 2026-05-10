@@ -176,6 +176,16 @@ List third-party assets, audio, fonts, code packages, and people here.
         }
 
         GUILayout.Space(6);
+        GUILayout.Label("Player data scripts", EditorStyles.boldLabel);
+        EditorGUILayout.HelpBox(
+            "Downloads `PlayerData.cs` and `PlayerDataManager.cs` from the repo into Assets/Project/Script/playerData/",
+            MessageType.Info);
+        if (GUILayout.Button("Download PlayerData scripts"))
+        {
+            _ = DownloadPlayerDataFromRepoAsync();
+        }
+
+        GUILayout.Space(6);
         GUILayout.Label("README Setup", EditorStyles.boldLabel);
         readmeContent = EditorGUILayout.TextArea(readmeContent, GUILayout.Height(200));
 
@@ -405,6 +415,70 @@ List third-party assets, audio, fonts, code packages, and people here.
             Object sceneAsset = AssetDatabase.LoadMainAssetAtPath(sceneAssetPath);
             if (sceneAsset != null)
                 EditorGUIUtility.PingObject(sceneAsset);
+        };
+    }
+
+    /// <summary>Files under <c>playerData/</c> on the UnityTools repo (see <c>GitHubToolsRawBase</c>).</summary>
+    private static readonly string[] PlayerDataRepoRelativePaths =
+    {
+        "playerData/PlayerData.cs",
+        "playerData/PlayerDataManager.cs"
+    };
+
+    public static async Task DownloadPlayerDataFromRepoAsync()
+    {
+        string destRoot = Path.Combine(Application.dataPath, "Project", "Script", "playerData");
+        if (!Directory.Exists(destRoot))
+            Directory.CreateDirectory(destRoot);
+
+        int failures = 0;
+        try
+        {
+            for (int i = 0; i < PlayerDataRepoRelativePaths.Length; i++)
+            {
+                string relative = PlayerDataRepoRelativePaths[i];
+                string fileName = Path.GetFileName(relative);
+                string url = GitHubToolsRawBase + relative.Replace('\\', '/');
+                string fullPath = Path.Combine(destRoot, fileName);
+
+                if (File.Exists(fullPath))
+                {
+                    bool overwrite = EditorUtility.DisplayDialog(
+                        "Overwrite file?",
+                        $"Assets/Project/Script/playerData/{fileName} already exists. Overwrite?",
+                        "Overwrite",
+                        "Cancel");
+                    if (!overwrite)
+                    {
+                        Debug.Log("PlayerData download cancelled by user.");
+                        return;
+                    }
+                }
+
+                float p = 0.05f + 0.9f * ((i + 1) / (float)PlayerDataRepoRelativePaths.Length);
+                EditorUtility.DisplayProgressBar("Downloading PlayerData", fileName, p);
+
+                bool ok = await DownloadFileAsync(url, fullPath);
+                if (!ok)
+                    failures++;
+            }
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
+        }
+
+        if (failures == 0)
+            Debug.Log($"PlayerData scripts downloaded to: {destRoot}");
+        else
+            Debug.LogError($"PlayerData download finished with {failures} failure(s). Check the Console.");
+
+        EditorApplication.delayCall += () =>
+        {
+            AssetDatabase.Refresh();
+            Object script = AssetDatabase.LoadMainAssetAtPath("Assets/Project/Script/playerData/PlayerDataManager.cs");
+            if (script != null)
+                EditorGUIUtility.PingObject(script);
         };
     }
 
